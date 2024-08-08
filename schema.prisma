@@ -1,5 +1,3 @@
-// schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,15 +8,6 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
-model Post {
-  id        String     @default(cuid()) @id
-  title     String
-  content   String?
-  published Boolean @default(false)
-  author    User?   @relation(fields: [authorId], references: [id])
-  authorId  String?
-}
-
 model User {
   id            String       @default(cuid()) @id
   name          String?
@@ -27,4 +16,52 @@ model User {
   updatedAt     DateTime  @updatedAt @map(name: "updated_at")
   posts         Post[]
   @@map(name: "users")
+}
+
+model Post {
+  id        String     @default(cuid()) @id
+  title     String
+  content   String?
+  published Boolean   @default(false)
+  author    User?     @relation(fields: [authorId], references: [id])
+  authorId  String?
+}
+
+model Customer {
+  id        String    @default(cuid()) @id
+  name      String @unique
+  contact   String
+  address   String
+  service   String
+  orders    Order[]
+}
+
+model Order {
+  id              String        @default(cuid()) @id
+  customer        Customer      @relation(fields: [customerId], references: [id])
+  customerId      String
+  service         String
+  statusId        String
+  status          OrderStatus   @relation(fields: [statusId], references: [id])
+  items           OrderItem[]
+  deliveryCharge  Float
+  discount        Float
+  createdAt       DateTime      @default(now()) @map(name: "created_at")
+  updatedAt       DateTime      @updatedAt @map(name: "updated_at")
+}
+
+model OrderItem {
+  id        String  @default(cuid()) @id
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   String
+  quantity  Int
+  unitPrice Float
+  amount    Float
+}
+
+model OrderStatus {
+  id        String  @default(cuid()) @id
+  status    String  @unique
+  orders    Order[]
 }
