@@ -36,6 +36,12 @@ model Customer {
   orders    Order[]
 }
 
+model OrderLiveStatus {
+  id      String  @default(cuid()) @id
+  status  String  @unique
+  orders  Order[]
+}
+
 model Order {
   id              String        @default(cuid()) @id
   customer        Customer      @relation(fields: [customerId], references: [id])
@@ -43,6 +49,8 @@ model Order {
   service         String
   statusId        String
   status          OrderStatus   @relation(fields: [statusId], references: [id])
+  liveStatusId    String?
+  liveStatus      OrderLiveStatus?  @relation(fields: [liveStatusId], references: [id])
   items           OrderItem[]
   deliveryCharge  Float
   discount        Float

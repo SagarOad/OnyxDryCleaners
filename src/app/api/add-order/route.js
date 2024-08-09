@@ -28,39 +28,29 @@ export async function POST(request) {
       );
     }
 
-    // Find customer by name
-    let customer = await prisma.customer.findFirst({
+    // Find or create the customer
+    const customer = await prisma.customer.upsert({
       where: { name: customerName },
+      update: {
+        contact: customerContact,
+        address: customerAddress,
+        service,
+      },
+      create: {
+        name: customerName,
+        contact: customerContact,
+        address: customerAddress,
+        service,
+      },
     });
 
-    if (!customer) {
-      // Create customer if not found
-      customer = await prisma.customer.create({
-        data: {
-          name: customerName,
-          contact: customerContact,
-          address: customerAddress,
-          service,
-        },
-      });
-    } else {
-      // Update customer details if found
-      customer = await prisma.customer.update({
-        where: { id: customer.id },
-        data: {
-          contact: customerContact,
-          address: customerAddress,
-          service,
-        },
-      });
-    }
-
-    // Create the order
+    // Create the order with default liveStatusId set to 1
     const order = await prisma.order.create({
       data: {
         customerId: customer.id,
         service,
         statusId: statusRecord.id,
+        liveStatusId: "1",  // Assuming "live" has an id of 1
         deliveryCharge: charges.deliveryCharge,
         discount: charges.discount,
         items: {
@@ -76,6 +66,7 @@ export async function POST(request) {
         customer: true,
         items: true,
         status: true,
+        liveStatus: true,
       },
     });
 

@@ -1,5 +1,5 @@
-import Sidebar from '../../components/Sidebar';
-import CustomerTable from '../../components/CustomerTable';
+import Sidebar from "../../components/Sidebar";
+import CustomerTable from "../../components/CustomerTable";
 
 export default function Customers() {
   return (
