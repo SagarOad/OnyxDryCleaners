@@ -17,6 +17,7 @@ export default function AddOrder() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...order.items];
@@ -47,15 +48,22 @@ export default function AddOrder() {
     setOrder({ ...order, items: updatedItems });
   };
 
-  const subtotal = order.items.reduce((acc, item) => acc + item.amount, 0);
-
-  const deliveryCharge = parseFloat(order.charges.deliveryCharge) || 0;
-  const discountPercentage = parseFloat(order.charges.discount) || 0;
-  const discountAmount = (subtotal * discountPercentage) / 100;
-
-  const totalAmount = (subtotal + deliveryCharge - discountAmount).toFixed(2);
+  const validateForm = () => {
+    const newErrors = {};
+    if (!order.customer) newErrors.customer = "Customer Name is required";
+    if (!order.contact) newErrors.contact = "Contact is required";
+    if (!order.service) newErrors.service = "Service is required";
+    if (order.items.length === 0 || order.items.every(item => !item.product || !item.unitPrice || !item.quantity)) {
+      newErrors.items = "At least one order detail is required";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async () => {
+    if (!validateForm()) return;
+    setLoading(true);
+
     try {
       const response = await axios.post("/api/add-order", {
         customerName: order.customer,
@@ -89,50 +97,73 @@ export default function AddOrder() {
     }
   };
 
+  const subtotal = order.items.reduce((acc, item) => acc + item.amount, 0);
+  const deliveryCharge = parseFloat(order.charges.deliveryCharge) || 0;
+  const discountPercentage = parseFloat(order.charges.discount) || 0;
+  const discountAmount = (subtotal * discountPercentage) / 100;
+  const totalAmount = (subtotal + deliveryCharge - discountAmount).toFixed(2);
+
   return (
     <>
       <div className="container mx-auto p-4 bg-white rounded shadow">
         <h2 className="text-2xl font-semibold mb-4">Place New Order</h2>
 
         {/* Customer Information */}
-        <div className="mb-4">
-          <label className="block text-gray-700">Customer Name</label>
-          <input
-            type="text"
-            value={order.customer}
-            onChange={(e) => setOrder({ ...order, customer: e.target.value })}
-            className="mt-1 p-2 block w-full border border-gray-300 rounded"
-          />
+        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className="block text-gray-700">Customer Name</label>
+            <input
+              type="text"
+              value={order.customer}
+              onChange={(e) => setOrder({ ...order, customer: e.target.value })}
+              className={`mt-1 p-2 block w-full border border-gray-300 rounded ${
+                errors.customer ? "border-red-500" : ""
+              }`}
+            />
+            {errors.customer && (
+              <p className="text-red-500 text-sm">{errors.customer}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-gray-700">Contact</label>
+            <input
+              type="text"
+              value={order.contact}
+              onChange={(e) => setOrder({ ...order, contact: e.target.value })}
+              className={`mt-1 p-2 block w-full border border-gray-300 rounded ${
+                errors.contact ? "border-red-500" : ""
+              }`}
+            />
+            {errors.contact && (
+              <p className="text-red-500 text-sm">{errors.contact}</p>
+            )}
+          </div>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700">Contact</label>
-          <input
-            type="text"
-            value={order.contact}
-            onChange={(e) => setOrder({ ...order, contact: e.target.value })}
-            className="mt-1 p-2 block w-full border border-gray-300 rounded"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700">Address</label>
-          <input
-            type="text"
-            value={order.address}
-            onChange={(e) => setOrder({ ...order, address: e.target.value })}
-            className="mt-1 p-2 block w-full border border-gray-300 rounded"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700">Service</label>
-          <input
-            type="text"
-            value={order.service}
-            onChange={(e) => setOrder({ ...order, service: e.target.value })}
-            className="mt-1 p-2 block w-full border border-gray-300 rounded"
-          />
+        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className="block text-gray-700">Address</label>
+            <input
+              type="text"
+              value={order.address}
+              onChange={(e) => setOrder({ ...order, address: e.target.value })}
+              className="mt-1 p-2 block w-full border border-gray-300 rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700">Service</label>
+            <input
+              type="text"
+              value={order.service}
+              onChange={(e) => setOrder({ ...order, service: e.target.value })}
+              className={`mt-1 p-2 block w-full border border-gray-300 rounded ${
+                errors.service ? "border-red-500" : ""
+              }`}
+            />
+            {errors.service && (
+              <p className="text-red-500 text-sm">{errors.service}</p>
+            )}
+          </div>
         </div>
 
         {/* Order Details */}
@@ -147,7 +178,9 @@ export default function AddOrder() {
               onChange={(e) =>
                 handleItemChange(index, "product", e.target.value)
               }
-              className="p-2 border border-gray-300 rounded w-1/4"
+              className={`p-2 border border-gray-300 rounded w-1/4 ${
+                errors.items ? "border-red-500" : ""
+              }`}
             />
             <input
               type="number"
@@ -156,7 +189,9 @@ export default function AddOrder() {
               onChange={(e) =>
                 handleItemChange(index, "unitPrice", parseFloat(e.target.value))
               }
-              className="p-2 border border-gray-300 rounded w-1/4"
+              className={`p-2 border border-gray-300 rounded w-1/4 ${
+                errors.items ? "border-red-500" : ""
+              }`}
             />
             <input
               type="number"
@@ -169,7 +204,9 @@ export default function AddOrder() {
                   parseFloat(e.target.value) || 0
                 )
               }
-              className="p-2 border border-gray-300 rounded w-1/4"
+              className={`p-2 border border-gray-300 rounded w-1/4 ${
+                errors.items ? "border-red-500" : ""
+              }`}
             />
 
             <button
@@ -180,7 +217,9 @@ export default function AddOrder() {
             </button>
           </div>
         ))}
-
+        {errors.items && (
+          <p className="text-red-500 text-sm mb-2">{errors.items}</p>
+        )}
         <button
           onClick={handleAddItem}
           className="mb-4 bg-blue-500 text-white p-2 rounded"
@@ -191,8 +230,8 @@ export default function AddOrder() {
         {/* Charges */}
         <h3 className="text-xl font-semibold mb-2">Charges</h3>
 
-        <div className="mb-4 flex space-x-2">
-          <div className="w-1/2">
+        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
             <label className="block text-gray-700">Delivery Charge</label>
             <input
               type="number"
@@ -206,7 +245,7 @@ export default function AddOrder() {
               className="mt-1 p-2 block w-full border border-gray-300 rounded"
             />
           </div>
-          <div className="w-1/2">
+          <div>
             <label className="block text-gray-700">Discount (%)</label>
             <input
               type="number"
@@ -219,34 +258,21 @@ export default function AddOrder() {
           </div>
         </div>
 
-        {/* Total Amount */}
         <div className="mb-4">
-          <label className="block text-gray-700">Total Amount</label>
-          <input
-            type="number"
-            value={totalAmount}
-            readOnly
-            className="mt-1 p-2 block w-full border border-gray-300 rounded bg-gray-100"
-          />
+          <button
+            onClick={handleSubmit}
+            className="bg-green-500 text-white p-2 rounded"
+            disabled={loading}
+          >
+            {loading ? "Submitting..." : "Submit Order"}
+          </button>
         </div>
-
-        {/* Submit Order Button */}
-        <button
-          onClick={handleSubmit}
-          className="bg-green-500 text-white p-2 rounded"
-          disabled={loading}
-        >
-          {loading ? "Processing..." : "Submit Order"}
-        </button>
       </div>
 
-      {/* Receipt Modal */}
       {showModal && receiptData && (
         <Receipt
-          order={receiptData}
-          totalAmount={receiptData.totalAmount}
+          data={receiptData}
           onClose={() => setShowModal(false)}
-          onConfirm={() => setShowModal(false)}
         />
       )}
     </>
