@@ -105,19 +105,19 @@ export default function AddOrder() {
 
   return (
     <>
-      <div className="container mx-auto p-4 bg-white rounded shadow">
-        <h2 className="text-2xl font-semibold mb-4">Place New Order</h2>
+      <div className="container mx-auto p-6 bg-white rounded-lg shadow-lg">
+        <h2 className="text-3xl font-bold mb-6 text-blue-800">Place New Order</h2>
 
         {/* Customer Information */}
-        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-gray-700">Customer Name</label>
+            <label className="block text-blue-700 font-semibold">Customer Name</label>
             <input
               type="text"
               value={order.customer}
               onChange={(e) => setOrder({ ...order, customer: e.target.value })}
-              className={`mt-1 p-2 block w-full border border-gray-300 rounded ${
-                errors.customer ? "border-red-500" : ""
+              className={`mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                errors.customer ? "border-red-500" : "border-gray-300"
               }`}
             />
             {errors.customer && (
@@ -125,13 +125,13 @@ export default function AddOrder() {
             )}
           </div>
           <div>
-            <label className="block text-gray-700">Contact</label>
+            <label className="block text-blue-700 font-semibold">Contact</label>
             <input
               type="text"
               value={order.contact}
               onChange={(e) => setOrder({ ...order, contact: e.target.value })}
-              className={`mt-1 p-2 block w-full border border-gray-300 rounded ${
-                errors.contact ? "border-red-500" : ""
+              className={`mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                errors.contact ? "border-red-500" : "border-gray-300"
               }`}
             />
             {errors.contact && (
@@ -140,24 +140,24 @@ export default function AddOrder() {
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-gray-700">Address</label>
+            <label className="block text-blue-700 font-semibold">Address</label>
             <input
               type="text"
               value={order.address}
               onChange={(e) => setOrder({ ...order, address: e.target.value })}
-              className="mt-1 p-2 block w-full border border-gray-300 rounded"
+              className="mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
             />
           </div>
           <div>
-            <label className="block text-gray-700">Service</label>
+            <label className="block text-blue-700 font-semibold">Service</label>
             <input
               type="text"
               value={order.service}
               onChange={(e) => setOrder({ ...order, service: e.target.value })}
-              className={`mt-1 p-2 block w-full border border-gray-300 rounded ${
-                errors.service ? "border-red-500" : ""
+              className={`mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                errors.service ? "border-red-500" : "border-gray-300"
               }`}
             />
             {errors.service && (
@@ -167,10 +167,10 @@ export default function AddOrder() {
         </div>
 
         {/* Order Details */}
-        <h3 className="text-xl font-semibold mb-2">Order Details</h3>
+        <h3 className="text-2xl font-bold text-blue-800 mb-4">Order Details</h3>
 
         {order.items.map((item, index) => (
-          <div key={index} className="flex mb-2 space-x-2 items-center">
+          <div key={index} className="flex mb-4 space-x-4 items-center">
             <input
               type="text"
               placeholder="Product"
@@ -178,8 +178,8 @@ export default function AddOrder() {
               onChange={(e) =>
                 handleItemChange(index, "product", e.target.value)
               }
-              className={`p-2 border border-gray-300 rounded w-1/4 ${
-                errors.items ? "border-red-500" : ""
+              className={`p-3 border rounded-md w-1/4 focus:ring-2 focus:ring-blue-500 ${
+                errors.items ? "border-red-500" : "border-gray-300"
               }`}
             />
             <input
@@ -189,8 +189,8 @@ export default function AddOrder() {
               onChange={(e) =>
                 handleItemChange(index, "unitPrice", parseFloat(e.target.value))
               }
-              className={`p-2 border border-gray-300 rounded w-1/4 ${
-                errors.items ? "border-red-500" : ""
+              className={`p-3 border rounded-md w-1/4 focus:ring-2 focus:ring-blue-500 ${
+                errors.items ? "border-red-500" : "border-gray-300"
               }`}
             />
             <input
@@ -204,75 +204,98 @@ export default function AddOrder() {
                   parseFloat(e.target.value) || 0
                 )
               }
-              className={`p-2 border border-gray-300 rounded w-1/4 ${
-                errors.items ? "border-red-500" : ""
+              className={`p-3 border rounded-md w-1/4 focus:ring-2 focus:ring-blue-500 ${
+                errors.items ? "border-red-500" : "border-gray-300"
               }`}
             />
 
             <button
               onClick={() => handleRemoveItem(index)}
-              className="p-2 bg-red-500 text-white rounded"
+              className="p-3 bg-red-600 text-white rounded-md shadow hover:bg-red-700 focus:ring-2 focus:ring-red-500"
             >
               Remove
             </button>
           </div>
         ))}
-        {errors.items && (
-          <p className="text-red-500 text-sm mb-2">{errors.items}</p>
-        )}
+        {errors.items && <p className="text-red-500 text-sm">{errors.items}</p>}
+
         <button
           onClick={handleAddItem}
-          className="mb-4 bg-blue-500 text-white p-2 rounded"
+          className="p-3 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 mb-6"
         >
-          Add New Item
+          Add Another Item
         </button>
 
         {/* Charges */}
-        <h3 className="text-xl font-semibold mb-2">Charges</h3>
-
-        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <h3 className="text-2xl font-bold text-blue-800 mb-4">Charges</h3>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-gray-700">Delivery Charge</label>
+            <label className="block text-blue-700 font-semibold">
+              Delivery Charge
+            </label>
             <input
               type="number"
+              placeholder="0"
               value={order.charges.deliveryCharge}
               onChange={(e) =>
-                handleChargeChange(
-                  "deliveryCharge",
-                  parseFloat(e.target.value) || 0
-                )
+                handleChargeChange("deliveryCharge", e.target.value)
               }
-              className="mt-1 p-2 block w-full border border-gray-300 rounded"
+              className="mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
             />
           </div>
           <div>
-            <label className="block text-gray-700">Discount (%)</label>
+            <label className="block text-blue-700 font-semibold">
+              Discount (%)
+            </label>
             <input
               type="number"
+              placeholder="0"
               value={order.charges.discount}
               onChange={(e) =>
-                handleChargeChange("discount", parseFloat(e.target.value) || 0)
+                handleChargeChange("discount", e.target.value)
               }
-              className="mt-1 p-2 block w-full border border-gray-300 rounded"
+              className="mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
             />
           </div>
         </div>
 
-        <div className="mb-4">
+        {/* Summary */}
+        <div className="bg-blue-50 p-4 mt-6 rounded-md shadow-md">
+          <div className="flex justify-between text-blue-700">
+            <span className="font-semibold">Subtotal:</span>
+            <span>{subtotal}</span>
+          </div>
+          <div className="flex justify-between text-blue-700">
+            <span className="font-semibold">Delivery Charge:</span>
+            <span>{deliveryCharge}</span>
+          </div>
+          <div className="flex justify-between text-blue-700">
+            <span className="font-semibold">Discount:</span>
+            <span>-{discountAmount}</span>
+          </div>
+          <div className="flex justify-between font-bold text-blue-900 mt-4 text-xl">
+            <span>Total Amount:</span>
+            <span>{totalAmount}</span>
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end space-x-4">
           <button
-            onClick={handleSubmit}
-            className="bg-green-500 text-white p-2 rounded"
-            disabled={loading}
+            onClick={() => setShowModal(true)}
+            className="p-3 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
           >
-            {loading ? "Submitting..." : "Submit Order"}
+            Show Receipt
           </button>
         </div>
       </div>
 
-      {showModal && receiptData && (
+      {/* Receipt Modal */}
+      {showModal && (
         <Receipt
-          data={receiptData}
+          order={order}
+          receiptData={receiptData}
           onClose={() => setShowModal(false)}
+          onConfirm={handleSubmit}
         />
       )}
     </>

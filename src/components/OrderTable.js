@@ -135,35 +135,62 @@ export default function OrderTable() {
       </div>
 
       {loading ? (
-        <div className="animate-pulse">
-          <div className="mb-2 h-6 bg-gray-300 rounded"></div>
-          <div className="space-y-2">
-            {Array.from({ length: ordersPerPage }).map((_, index) => (
-              <div key={index} className="flex items-center space-x-4">
-                <div className="h-8 bg-gray-300 rounded w-12"></div>
-                <div className="h-8 bg-gray-300 rounded w-48"></div>
-                <div className="h-8 bg-gray-300 rounded w-24"></div>
-                <div className="h-8 bg-gray-300 rounded w-32"></div>
-                <div className="h-8 bg-gray-300 rounded w-24"></div>
-                <div className="h-8 bg-gray-300 rounded w-24"></div>
-                <div className="h-8 bg-gray-300 rounded w-24"></div>
-                <div className="h-8 bg-gray-300 rounded w-24"></div>
-              </div>
-            ))}
-          </div>
-        </div>
+         <div className="animate-pulse">
+         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+           <thead className="bg-blue-600 text-white">
+             <tr>
+               <th className="py-4 px-6 font-semibold uppercase text-sm">
+                 <div className="bg-gray-300 h-6 rounded w-24"></div>
+               </th>
+               <th className="py-4 px-6 font-semibold uppercase text-sm">
+                 <div className="bg-gray-300 h-6 rounded w-48"></div>
+               </th>
+               <th className="py-4 px-6 font-semibold uppercase text-sm">
+                 <div className="bg-gray-300 h-6 rounded w-36"></div>
+               </th>
+               <th className="py-4 px-6 font-semibold uppercase text-sm">
+                 <div className="bg-gray-300 h-6 rounded w-52"></div>
+               </th>
+               <th className="py-4 px-6 font-semibold uppercase text-sm">
+                 <div className="bg-gray-300 h-6 rounded w-36"></div>
+               </th>
+             </tr>
+           </thead>
+           <tbody>
+             {Array.from({ length: ordersPerPage }).map((_, index) => (
+               <tr key={index} className="border-b last:border-none">
+                 <td className="py-4 px-6">
+                   <div className="bg-gray-200 h-4 rounded w-12"></div>
+                 </td>
+                 <td className="py-4 px-6">
+                   <div className="bg-gray-200 h-4 rounded w-48"></div>
+                 </td>
+                 <td className="py-4 px-6">
+                   <div className="bg-gray-200 h-4 rounded w-36"></div>
+                 </td>
+                 <td className="py-4 px-6">
+                   <div className="bg-gray-200 h-4 rounded w-52"></div>
+                 </td>
+                 <td className="py-4 px-6">
+                   <div className="bg-gray-200 h-4 rounded w-36"></div>
+                 </td>
+               </tr>
+             ))}
+           </tbody>
+         </table>
+       </div>
       ) : (
         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-          <thead className="bg-gray-50">
+          <thead className="bg-blue-600 text-white">
             <tr>
-              <th className="py-4 px-6 text-gray-600 font-semibold">#</th>
-              <th className="py-4 px-6 text-gray-600 font-semibold">Customer</th>
-              <th className="py-4 px-6 text-gray-600 font-semibold">Service</th>
-              <th className="py-4 px-6 text-gray-600 font-semibold">Status</th>
-              <th className="py-4 px-6 text-gray-600 font-semibold">Subtotal</th>
-              <th className="py-4 px-6 text-gray-600 font-semibold">Delivery Charge</th>
-              <th className="py-4 px-6 text-gray-600 font-semibold">Discount</th>
-              <th className="py-4 px-6 text-gray-600 font-semibold">Actions</th>
+              <th className="py-4 px-6 font-semibold">#</th>
+              <th className="py-4 px-6 font-semibold">Customer</th>
+              <th className="py-4 px-6 font-semibold">Service</th>
+              <th className="py-4 px-6 font-semibold">Status</th>
+              <th className="py-4 px-6 font-semibold">Subtotal</th>
+              <th className="py-4 px-6 font-semibold">Delivery Charge</th>
+              <th className="py-4 px-6 font-semibold">Discount</th>
+              <th className="py-4 px-6 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -230,27 +257,11 @@ export default function OrderTable() {
                     <FaCheckCircle className="text-white" />
                   </button>
                   <button
-                    onClick={() => updateOrderStatus(order.id, "cancelled")}
-                    className={`p-2 rounded-full ${
-                      loadingOrderId === order.id &&
-                      loadingStatus === "cancelled"
-                        ? "bg-red-500 cursor-not-allowed"
-                        : "bg-red-600"
-                    }`}
-                    disabled={
-                      loadingOrderId === order.id &&
-                      loadingStatus === "cancelled"
-                    }
-                  >
-                    <FaTimesCircle className="text-white" />
-                  </button>
-                  <button
                     onClick={() => deleteOrder(order.id)}
                     className={`p-2 rounded-full ${
-                      loadingOrderId === order.id &&
-                      loadingStatus === "delete"
-                        ? "bg-gray-500 cursor-not-allowed"
-                        : "bg-gray-600"
+                      loadingOrderId === order.id && loadingStatus === "delete"
+                        ? "bg-red-500 cursor-not-allowed"
+                        : "bg-red-600"
                     }`}
                     disabled={
                       loadingOrderId === order.id && loadingStatus === "delete"
@@ -265,27 +276,20 @@ export default function OrderTable() {
         </table>
       )}
 
-      {/* Pagination */}
-      <div className="flex justify-between items-center mt-4">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400"
-        >
-          Previous
-        </button>
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={() =>
-            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-          }
-          disabled={currentPage === totalPages}
-          className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400"
-        >
-          Next
-        </button>
+      <div className="flex justify-center mt-4">
+        {Array.from({ length: totalPages }, (_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentPage(index + 1)}
+            className={`mx-1 px-3 py-1 rounded ${
+              currentPage === index + 1
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-600"
+            }`}
+          >
+            {index + 1}
+          </button>
+        ))}
       </div>
     </div>
   );
