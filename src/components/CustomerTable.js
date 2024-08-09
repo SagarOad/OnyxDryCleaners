@@ -1,25 +1,22 @@
 "use client";
-import { useState } from "react";
-
-const dummyCustomers = [
-  {
-    id: 1,
-    name: "Austin Bailey",
-    contact: "123-456-7890",
-    address: "123 Elm Street",
-    service: "Washing",
-  },
-  {
-    id: 2,
-    name: "John Doe",
-    contact: "987-654-3210",
-    address: "456 Oak Avenue",
-    service: "Dry Cleaning",
-  },
-];
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function CustomerTable() {
-  const [customers, setCustomers] = useState(dummyCustomers);
+  const [customers, setCustomers] = useState([]);
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await axios.get("/api/get-customers");
+        setCustomers(response.data);
+      } catch (error) {
+        console.error("Failed to fetch customers:", error);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
 
   return (
     <table className="min-w-full bg-white">

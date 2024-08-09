@@ -4,7 +4,6 @@ import { useState } from "react";
 import Receipt from "../components/Receipt";
 import axios from "axios";
 
-
 export default function AddOrder() {
   const [order, setOrder] = useState({
     customer: "",
@@ -16,6 +15,8 @@ export default function AddOrder() {
   });
 
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [receiptData, setReceiptData] = useState(null);
 
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...order.items];
@@ -54,12 +55,7 @@ export default function AddOrder() {
 
   const totalAmount = (subtotal + deliveryCharge - discountAmount).toFixed(2);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setShowModal(true); // Show the receipt modal
-  };
-
-  const handleConfirmOrder = async () => {
+  const handleSubmit = async () => {
     try {
       const response = await axios.post("/api/add-order", {
         customerName: order.customer,
@@ -70,28 +66,26 @@ export default function AddOrder() {
         charges: {
           subtotal: order.items.reduce((acc, item) => acc + item.amount, 0),
           taxAmount: 0,
-          totalAmount: (order.items.reduce((acc, item) => acc + item.amount, 0) + parseFloat(order.charges.deliveryCharge) - (order.items.reduce((acc, item) => acc + item.amount, 0) * parseFloat(order.charges.discount) / 100)).toFixed(2),
+          totalAmount: (
+            order.items.reduce((acc, item) => acc + item.amount, 0) +
+            parseFloat(order.charges.deliveryCharge) -
+            (order.items.reduce((acc, item) => acc + item.amount, 0) *
+              parseFloat(order.charges.discount)) /
+              100
+          ).toFixed(2),
           pickupCharge: 0,
           deliveryCharge: parseFloat(order.charges.deliveryCharge) || 0,
           discount: parseFloat(order.charges.discount) || 0,
         },
-        status: "received",
+        status: "processing",
       });
 
-      console.log("Order successfully created:", response.data);
-      setShowModal(false); // Close the modal after confirming the order
-
-      // Optionally reset the order form after submission
-      setOrder({
-        customer: "",
-        contact: "",
-        address: "",
-        service: "",
-        items: [{ product: "", quantity: 1, unitPrice: "", amount: 0 }],
-        charges: { deliveryCharge: 0, discount: 0 },
-      });
+      setReceiptData(response.data); // Set receipt data
+      setShowModal(true); // Show receipt modal
     } catch (error) {
       console.error("Error creating order:", error);
+    } finally {
+      setLoading(false); // Hide loading indicator
     }
   };
 
@@ -150,7 +144,9 @@ export default function AddOrder() {
               type="text"
               placeholder="Product"
               value={item.product}
-              onChange={(e) => handleItemChange(index, "product", e.target.value)}
+              onChange={(e) =>
+                handleItemChange(index, "product", e.target.value)
+              }
               className="p-2 border border-gray-300 rounded w-1/4"
             />
             <input
@@ -158,11 +154,7 @@ export default function AddOrder() {
               placeholder="Unit Price"
               value={item.unitPrice}
               onChange={(e) =>
-                handleItemChange(
-                  index,
-                  "unitPrice",
-                  parseFloat(e.target.value)
-                )
+                handleItemChange(index, "unitPrice", parseFloat(e.target.value))
               }
               className="p-2 border border-gray-300 rounded w-1/4"
             />
@@ -242,18 +234,19 @@ export default function AddOrder() {
         <button
           onClick={handleSubmit}
           className="bg-green-500 text-white p-2 rounded"
+          disabled={loading}
         >
-          Submit Order
+          {loading ? "Processing..." : "Submit Order"}
         </button>
       </div>
 
       {/* Receipt Modal */}
-      {showModal && (
+      {showModal && receiptData && (
         <Receipt
-          order={order}
-          totalAmount={totalAmount}
+          order={receiptData}
+          totalAmount={receiptData.totalAmount}
           onClose={() => setShowModal(false)}
-          onConfirm={handleConfirmOrder}
+          onConfirm={() => setShowModal(false)}
         />
       )}
     </>

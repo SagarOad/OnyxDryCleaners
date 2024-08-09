@@ -7,32 +7,33 @@ const Receipt = ({ order, totalAmount, onClose, onConfirm }) => {
         <h3 className="text-lg font-semibold mb-2">Order Receipt</h3>
 
         <div className="mb-2">
-          <strong>Customer:</strong> {order.customer}
+          <strong>Customer:</strong> {order?.customer?.name}
         </div>
         <div className="mb-2">
-          <strong>Contact:</strong> {order.contact}
+          <strong>Contact:</strong> {order?.customer?.contact}
         </div>
         <div className="mb-2">
-          <strong>Address:</strong> {order.address}
+          <strong>Address:</strong> {order?.customer?.address}
         </div>
         <div className="mb-2">
-          <strong>Service:</strong> {order.service}
+          <strong>Service:</strong> {order?.service}
         </div>
 
         <h4 className="text-md font-semibold mt-4">Items</h4>
         <ul>
-          {order.items.map((item, index) => (
+          {order?.items.map((item, index) => (
             <li key={index}>
-              {item.product} - {item.quantity} x {item.unitPrice} = {item.amount}
+              {item.product} - {item.quantity} x {item.unitPrice} ={" "}
+              {item.amount}
             </li>
           ))}
         </ul>
 
         <div className="mt-4">
-          <strong>Delivery Charge:</strong> {order.charges.deliveryCharge}
+          <strong>Delivery Charge:</strong> {order?.deliveryCharge}
         </div>
         <div>
-          <strong>Discount:</strong> {order.charges.discount}%
+          <strong>Discount:</strong> {order?.discount}%
         </div>
         <div className="mt-4 text-lg">
           <strong>Total:</strong> {totalAmount}
