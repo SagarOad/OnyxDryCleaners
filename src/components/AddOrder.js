@@ -53,7 +53,12 @@ export default function AddOrder() {
     if (!order.customer) newErrors.customer = "Customer Name is required";
     if (!order.contact) newErrors.contact = "Contact is required";
     if (!order.service) newErrors.service = "Service is required";
-    if (order.items.length === 0 || order.items.every(item => !item.product || !item.unitPrice || !item.quantity)) {
+    if (
+      order.items.length === 0 ||
+      order.items.some(
+        (item) => !item.product || !item.unitPrice || !item.quantity
+      )
+    ) {
       newErrors.items = "At least one order detail is required";
     }
     setErrors(newErrors);
@@ -85,15 +90,23 @@ export default function AddOrder() {
           deliveryCharge: parseFloat(order.charges.deliveryCharge) || 0,
           discount: parseFloat(order.charges.discount) || 0,
         },
-        status: "processing",
+        status: "received",
       });
 
-      setReceiptData(response.data); // Set receipt data
-      setShowModal(true); // Show receipt modal
+      setReceiptData(response.data);
+      setShowModal(true);
     } catch (error) {
       console.error("Error creating order:", error);
     } finally {
-      setLoading(false); // Hide loading indicator
+      setLoading(false);
+      setOrder({
+        customer: "",
+        contact: "",
+        address: "",
+        service: "",
+        items: [{ product: "", quantity: 1, unitPrice: "", amount: 0 }],
+        charges: { deliveryCharge: 0, discount: 0 },
+      });
     }
   };
 
@@ -102,200 +115,218 @@ export default function AddOrder() {
   const discountPercentage = parseFloat(order.charges.discount) || 0;
   const discountAmount = (subtotal * discountPercentage) / 100;
   const totalAmount = (subtotal + deliveryCharge - discountAmount).toFixed(2);
-
   return (
     <>
-      <div className="container mx-auto p-6 bg-white rounded-lg shadow-lg">
-        <h2 className="text-3xl font-bold mb-6 text-blue-800">Place New Order</h2>
+      <div className=" flex  justify-left">
+        <div className="container p-6 mr-4 bg-white rounded-lg shadow-lg max-w-4xl">
+          <h2 className="text-2xl font-semibold mb-6 text-blue-800">
+            New Order
+          </h2>
 
-        {/* Customer Information */}
-        <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div>
-            <label className="block text-blue-700 font-semibold">Customer Name</label>
-            <input
-              type="text"
-              value={order.customer}
-              onChange={(e) => setOrder({ ...order, customer: e.target.value })}
-              className={`mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
-                errors.customer ? "border-red-500" : "border-gray-300"
-              }`}
-            />
-            {errors.customer && (
-              <p className="text-red-500 text-sm">{errors.customer}</p>
-            )}
+          {/* Customer Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-blue-700 font-medium mb-1">
+                Customer Name
+              </label>
+              <input
+                type="text"
+                value={order.customer}
+                onChange={(e) =>
+                  setOrder({ ...order, customer: e.target.value })
+                }
+                className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                  errors.customer ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.customer && (
+                <p className="text-red-500 text-xs mt-1">{errors.customer}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-blue-700 font-medium mb-1">
+                Contact
+              </label>
+              <input
+                type="text"
+                value={order.contact}
+                onChange={(e) =>
+                  setOrder({ ...order, contact: e.target.value })
+                }
+                className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                  errors.contact ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.contact && (
+                <p className="text-red-500 text-xs mt-1">{errors.contact}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-blue-700 font-medium mb-1">
+                Address
+              </label>
+              <input
+                type="text"
+                value={order.address}
+                onChange={(e) =>
+                  setOrder({ ...order, address: e.target.value })
+                }
+                className="p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
+              />
+            </div>
+            <div>
+              <label className="block text-blue-700 font-medium mb-1">
+                Service
+              </label>
+              <input
+                type="text"
+                value={order.service}
+                onChange={(e) =>
+                  setOrder({ ...order, service: e.target.value })
+                }
+                className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                  errors.service ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.service && (
+                <p className="text-red-500 text-xs mt-1">{errors.service}</p>
+              )}
+            </div>
           </div>
-          <div>
-            <label className="block text-blue-700 font-semibold">Contact</label>
-            <input
-              type="text"
-              value={order.contact}
-              onChange={(e) => setOrder({ ...order, contact: e.target.value })}
-              className={`mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
-                errors.contact ? "border-red-500" : "border-gray-300"
-              }`}
-            />
-            {errors.contact && (
-              <p className="text-red-500 text-sm">{errors.contact}</p>
-            )}
-          </div>
-        </div>
 
-        <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div>
-            <label className="block text-blue-700 font-semibold">Address</label>
-            <input
-              type="text"
-              value={order.address}
-              onChange={(e) => setOrder({ ...order, address: e.target.value })}
-              className="mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
-            />
-          </div>
-          <div>
-            <label className="block text-blue-700 font-semibold">Service</label>
-            <input
-              type="text"
-              value={order.service}
-              onChange={(e) => setOrder({ ...order, service: e.target.value })}
-              className={`mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
-                errors.service ? "border-red-500" : "border-gray-300"
-              }`}
-            />
-            {errors.service && (
-              <p className="text-red-500 text-sm">{errors.service}</p>
-            )}
-          </div>
-        </div>
+          {/* Order Details */}
+          <h3 className="text-xl font-semibold text-blue-800 mb-4">
+            Order Details
+          </h3>
 
-        {/* Order Details */}
-        <h3 className="text-2xl font-bold text-blue-800 mb-4">Order Details</h3>
-
-        {order.items.map((item, index) => (
-          <div key={index} className="flex mb-4 space-x-4 items-center">
-            <input
-              type="text"
-              placeholder="Product"
-              value={item.product}
-              onChange={(e) =>
-                handleItemChange(index, "product", e.target.value)
-              }
-              className={`p-3 border rounded-md w-1/4 focus:ring-2 focus:ring-blue-500 ${
-                errors.items ? "border-red-500" : "border-gray-300"
-              }`}
-            />
-            <input
-              type="number"
-              placeholder="Unit Price"
-              value={item.unitPrice}
-              onChange={(e) =>
-                handleItemChange(index, "unitPrice", parseFloat(e.target.value))
-              }
-              className={`p-3 border rounded-md w-1/4 focus:ring-2 focus:ring-blue-500 ${
-                errors.items ? "border-red-500" : "border-gray-300"
-              }`}
-            />
-            <input
-              type="number"
-              placeholder="Quantity"
-              value={item.quantity}
-              onChange={(e) =>
-                handleItemChange(
-                  index,
-                  "quantity",
-                  parseFloat(e.target.value) || 0
-                )
-              }
-              className={`p-3 border rounded-md w-1/4 focus:ring-2 focus:ring-blue-500 ${
-                errors.items ? "border-red-500" : "border-gray-300"
-              }`}
-            />
-
-            <button
-              onClick={() => handleRemoveItem(index)}
-              className="p-3 bg-red-600 text-white rounded-md shadow hover:bg-red-700 focus:ring-2 focus:ring-red-500"
+          {order.items.map((item, index) => (
+            <div
+              key={index}
+              className="flex flex-col md:flex-row items-center mb-4 gap-2"
             >
-              Remove
-            </button>
-          </div>
-        ))}
-        {errors.items && <p className="text-red-500 text-sm">{errors.items}</p>}
+              <input
+                type="text"
+                placeholder="Product"
+                value={item.product}
+                onChange={(e) =>
+                  handleItemChange(index, "product", e.target.value)
+                }
+                className={`p-3 border rounded-md w-full md:w-1/4 focus:ring-2 focus:ring-blue-500 ${
+                  errors.items ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              <input
+                type="number"
+                placeholder="Unit Price"
+                value={item.unitPrice}
+                onChange={(e) =>
+                  handleItemChange(
+                    index,
+                    "unitPrice",
+                    parseFloat(e.target.value)
+                  )
+                }
+                className={`p-3 border rounded-md w-full md:w-1/4 focus:ring-2 focus:ring-blue-500 ${
+                  errors.items ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              <input
+                type="number"
+                placeholder="Quantity"
+                value={item.quantity}
+                onChange={(e) =>
+                  handleItemChange(
+                    index,
+                    "quantity",
+                    parseFloat(e.target.value) || 0
+                  )
+                }
+                className={`p-3 border rounded-md w-full md:w-1/4 focus:ring-2 focus:ring-blue-500 ${
+                  errors.items ? "border-red-500" : "border-gray-300"
+                }`}
+              />
 
-        <button
-          onClick={handleAddItem}
-          className="p-3 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 mb-6"
-        >
-          Add Another Item
-        </button>
+              <button
+                onClick={() => handleRemoveItem(index)}
+                className="p-2 bg-red-600 text-white rounded-md shadow hover:bg-red-700 focus:ring-2 focus:ring-red-500"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          {errors.items && (
+            <p className="text-red-500 text-xs mb-4">{errors.items}</p>
+          )}
 
-        {/* Charges */}
-        <h3 className="text-2xl font-bold text-blue-800 mb-4">Charges</h3>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div>
-            <label className="block text-blue-700 font-semibold">
-              Delivery Charge
-            </label>
-            <input
-              type="number"
-              placeholder="0"
-              value={order.charges.deliveryCharge}
-              onChange={(e) =>
-                handleChargeChange("deliveryCharge", e.target.value)
-              }
-              className="mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
-            />
-          </div>
-          <div>
-            <label className="block text-blue-700 font-semibold">
-              Discount (%)
-            </label>
-            <input
-              type="number"
-              placeholder="0"
-              value={order.charges.discount}
-              onChange={(e) =>
-                handleChargeChange("discount", e.target.value)
-              }
-              className="mt-2 p-3 block w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
-            />
-          </div>
-        </div>
-
-        {/* Summary */}
-        <div className="bg-blue-50 p-4 mt-6 rounded-md shadow-md">
-          <div className="flex justify-between text-blue-700">
-            <span className="font-semibold">Subtotal:</span>
-            <span>{subtotal}</span>
-          </div>
-          <div className="flex justify-between text-blue-700">
-            <span className="font-semibold">Delivery Charge:</span>
-            <span>{deliveryCharge}</span>
-          </div>
-          <div className="flex justify-between text-blue-700">
-            <span className="font-semibold">Discount:</span>
-            <span>-{discountAmount}</span>
-          </div>
-          <div className="flex justify-between font-bold text-blue-900 mt-4 text-xl">
-            <span>Total Amount:</span>
-            <span>{totalAmount}</span>
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-end space-x-4">
           <button
-            onClick={() => setShowModal(true)}
-            className="p-3 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
+            onClick={handleAddItem}
+            className="p-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 mb-6"
           >
-            Show Receipt
+            Add Item
+          </button>
+
+          {/* Charges */}
+          <h3 className="text-xl font-semibold text-blue-800 mb-4">Charges</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-blue-700 font-medium mb-1">
+                Delivery Charge
+              </label>
+              <input
+                type="number"
+                value={order.charges.deliveryCharge}
+                onChange={(e) =>
+                  handleChargeChange("deliveryCharge", e.target.value)
+                }
+                className="p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
+              />
+            </div>
+            <div>
+              <label className="block text-blue-700 font-medium mb-1">
+                Discount (%)
+              </label>
+              <input
+                type="number"
+                value={order.charges.discount}
+                onChange={(e) => handleChargeChange("discount", e.target.value)}
+                className="p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full p-3 bg-green-600 text-white rounded-md shadow hover:bg-green-700 focus:ring-2 focus:ring-green-500 disabled:bg-gray-300"
+          >
+            {loading ? "Submitting..." : "Submit Order"}
           </button>
         </div>
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <div className="flex justify-between mb-6">
+            <div className="text-blue-800 font-medium">Subtotal:</div>
+            <div className="text-blue-800">${subtotal.toFixed(2)}</div>
+          </div>
+          <div className="flex justify-between mb-6">
+            <div className="text-blue-800 font-medium">Discount:</div>
+            <div className="text-blue-800">-${discountAmount.toFixed(2)}</div>
+          </div>
+          <div className="flex justify-between mb-6">
+            <div className="text-blue-800 mr-10 font-medium">Delivery Charge:</div>
+            <div className="text-blue-800">${deliveryCharge.toFixed(2)}</div>
+          </div>
+          <div className="flex justify-between mb-6">
+            <div className="text-blue-800 font-medium">Total:</div>
+            <div className="text-blue-800 font-bold">${totalAmount}</div>
+          </div>
+        </div>
       </div>
-
-      {/* Receipt Modal */}
       {showModal && (
         <Receipt
-          order={order}
-          receiptData={receiptData}
+          data={receiptData}
+          // customerName={customerName}
+          totalAmount={totalAmount}
           onClose={() => setShowModal(false)}
-          onConfirm={handleSubmit}
         />
       )}
     </>

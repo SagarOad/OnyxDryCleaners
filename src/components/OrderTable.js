@@ -7,6 +7,7 @@ import {
   FaSyncAlt,
   FaTrashAlt,
 } from "react-icons/fa";
+import { CSSTransition, TransitionGroup } from "react-transition-group";
 
 export default function OrderTable() {
   const [orders, setOrders] = useState([]);
@@ -16,7 +17,8 @@ export default function OrderTable() {
   const [ordersPerPage] = useState(10);
   const [loadingOrderId, setLoadingOrderId] = useState(null);
   const [loadingStatus, setLoadingStatus] = useState("");
-  const [loading, setLoading] = useState(true); // New loading state
+  const [loading, setLoading] = useState(true);
+  const [messagePopup, setMessagePopup] = useState(null);
 
   const fetchOrders = async () => {
     try {
@@ -25,7 +27,7 @@ export default function OrderTable() {
     } catch (error) {
       console.error("Error fetching orders:", error);
     } finally {
-      setLoading(false); // Set loading to false after fetching
+      setLoading(false);
     }
   };
 
@@ -44,13 +46,26 @@ export default function OrderTable() {
       });
 
       const updatedOrder = response.data;
-      setOrders((prevOrders) =>
-        prevOrders.filter((order) => order.id !== updatedOrder.id)
-      );
+
+      // Animation for row removal
+      setTimeout(() => {
+        setOrders((prevOrders) =>
+          prevOrders.filter((order) => order.id !== updatedOrder.id)
+        );
+      }, 300);
+
+      setMessagePopup({
+        type: "success",
+        message: "Order deleted successfully!",
+      });
 
       console.log("Order deleted successfully:", updatedOrder);
     } catch (error) {
       console.error("Failed to delete order:", error);
+      setMessagePopup({
+        type: "error",
+        message: "Failed to delete order.",
+      });
     } finally {
       setLoadingOrderId(null);
       setLoadingStatus("");
@@ -76,9 +91,18 @@ export default function OrderTable() {
         )
       );
 
+      setMessagePopup({
+        type: "success",
+        message: `Order ${status} successfully!`,
+      });
+
       console.log("Order status updated successfully:", updatedOrder);
     } catch (error) {
       console.error("Failed to update order status:", error);
+      setMessagePopup({
+        type: "error",
+        message: "Failed to update order status.",
+      });
     } finally {
       setLoadingOrderId(null);
       setLoadingStatus("");
@@ -120,7 +144,7 @@ export default function OrderTable() {
             <option value="received">Received</option>
             <option value="processing">Processing</option>
             <option value="completed">Complete</option>
-            <option value="cancelled">Canceled</option>
+            <option value="cancelled">Cancelled</option>
           </select>
         </div>
         <div>
@@ -135,50 +159,50 @@ export default function OrderTable() {
       </div>
 
       {loading ? (
-         <div className="animate-pulse">
-         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-           <thead className="bg-blue-600 text-white">
-             <tr>
-               <th className="py-4 px-6 font-semibold uppercase text-sm">
-                 <div className="bg-gray-300 h-6 rounded w-24"></div>
-               </th>
-               <th className="py-4 px-6 font-semibold uppercase text-sm">
-                 <div className="bg-gray-300 h-6 rounded w-48"></div>
-               </th>
-               <th className="py-4 px-6 font-semibold uppercase text-sm">
-                 <div className="bg-gray-300 h-6 rounded w-36"></div>
-               </th>
-               <th className="py-4 px-6 font-semibold uppercase text-sm">
-                 <div className="bg-gray-300 h-6 rounded w-52"></div>
-               </th>
-               <th className="py-4 px-6 font-semibold uppercase text-sm">
-                 <div className="bg-gray-300 h-6 rounded w-36"></div>
-               </th>
-             </tr>
-           </thead>
-           <tbody>
-             {Array.from({ length: ordersPerPage }).map((_, index) => (
-               <tr key={index} className="border-b last:border-none">
-                 <td className="py-4 px-6">
-                   <div className="bg-gray-200 h-4 rounded w-12"></div>
-                 </td>
-                 <td className="py-4 px-6">
-                   <div className="bg-gray-200 h-4 rounded w-48"></div>
-                 </td>
-                 <td className="py-4 px-6">
-                   <div className="bg-gray-200 h-4 rounded w-36"></div>
-                 </td>
-                 <td className="py-4 px-6">
-                   <div className="bg-gray-200 h-4 rounded w-52"></div>
-                 </td>
-                 <td className="py-4 px-6">
-                   <div className="bg-gray-200 h-4 rounded w-36"></div>
-                 </td>
-               </tr>
-             ))}
-           </tbody>
-         </table>
-       </div>
+        <div className="animate-pulse">
+          <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+            <thead className="bg-blue-600 text-white">
+              <tr>
+                <th className="py-4 px-6 font-semibold uppercase text-sm">
+                  <div className="bg-gray-300 h-6 rounded w-24"></div>
+                </th>
+                <th className="py-4 px-6 font-semibold uppercase text-sm">
+                  <div className="bg-gray-300 h-6 rounded w-48"></div>
+                </th>
+                <th className="py-4 px-6 font-semibold uppercase text-sm">
+                  <div className="bg-gray-300 h-6 rounded w-36"></div>
+                </th>
+                <th className="py-4 px-6 font-semibold uppercase text-sm">
+                  <div className="bg-gray-300 h-6 rounded w-52"></div>
+                </th>
+                <th className="py-4 px-6 font-semibold uppercase text-sm">
+                  <div className="bg-gray-300 h-6 rounded w-36"></div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: ordersPerPage }).map((_, index) => (
+                <tr key={index} className="border-b last:border-none">
+                  <td className="py-4 px-6">
+                    <div className="bg-gray-200 h-4 rounded w-12"></div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="bg-gray-200 h-4 rounded w-48"></div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="bg-gray-200 h-4 rounded w-36"></div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="bg-gray-200 h-4 rounded w-52"></div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="bg-gray-200 h-4 rounded w-36"></div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
           <thead className="bg-blue-600 text-white">
@@ -193,104 +217,137 @@ export default function OrderTable() {
               <th className="py-4 px-6 font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <TransitionGroup component="tbody">
             {currentOrders.map((order, index) => (
-              <tr key={order.id} className="border-b">
-                <td className="py-4 px-6">{indexOfFirstOrder + index + 1}</td>
-                <td className="py-4 px-6">{order?.customer.name}</td>
-                <td className="py-4 px-6">{order?.service}</td>
-                <td className="py-4 px-6">
-                  {order?.status?.status === "received" && (
-                    <span className="text-blue-600 font-semibold">Received</span>
-                  )}
-                  {order?.status?.status === "processing" && (
-                    <span className="text-orange-600 font-semibold">
-                      Processing
-                    </span>
-                  )}
-                  {order?.status?.status === "completed" && (
-                    <span className="text-green-600 font-semibold">Complete</span>
-                  )}
-                  {order?.status?.status === "cancelled" && (
-                    <span className="text-red-600 font-semibold">Canceled</span>
-                  )}
-                </td>
-                <td className="py-4 px-6">
-                  Rs:{" "}
-                  <span className="font-bold">
-                    {order?.items?.reduce((acc, item) => acc + item.amount, 0)}
-                  </span>
-                </td>
-                <td className="py-4 px-6">
-                  Rs: <span className="font-bold">{order?.deliveryCharge}</span>
-                </td>
-                <td className="py-4 px-6">{order?.discount}%</td>
-                <td className="py-4 px-6 flex space-x-2">
-                  <button
-                    onClick={() => updateOrderStatus(order.id, "processing")}
-                    className={`p-2 rounded-full ${
-                      loadingOrderId === order.id &&
-                      loadingStatus === "processing"
-                        ? "bg-orange-500 cursor-not-allowed"
-                        : "bg-orange-600"
-                    }`}
-                    disabled={
-                      loadingOrderId === order.id &&
-                      loadingStatus === "processing"
-                    }
-                  >
-                    <FaSyncAlt className="text-white" />
-                  </button>
-                  <button
-                    onClick={() => updateOrderStatus(order.id, "completed")}
-                    className={`p-2 rounded-full ${
-                      loadingOrderId === order.id &&
-                      loadingStatus === "completed"
-                        ? "bg-green-500 cursor-not-allowed"
-                        : "bg-green-600"
-                    }`}
-                    disabled={
-                      loadingOrderId === order.id &&
-                      loadingStatus === "completed"
-                    }
-                  >
-                    <FaCheckCircle className="text-white" />
-                  </button>
-                  <button
-                    onClick={() => deleteOrder(order.id)}
-                    className={`p-2 rounded-full ${
-                      loadingOrderId === order.id && loadingStatus === "delete"
-                        ? "bg-red-500 cursor-not-allowed"
-                        : "bg-red-600"
-                    }`}
-                    disabled={
-                      loadingOrderId === order.id && loadingStatus === "delete"
-                    }
-                  >
-                    <FaTrashAlt className="text-white" />
-                  </button>
-                </td>
-              </tr>
+              <CSSTransition key={order.id} timeout={300} classNames="fade">
+                <tr className="border-b">
+                  <td className="py-4 px-6">
+                    {indexOfFirstOrder + index + 1}
+                  </td>
+                  <td className="py-4 px-6">{order?.customer.name}</td>
+                  <td className="py-4 px-6">{order?.service}</td>
+                  <td className="py-4 px-6">
+                    {order?.status?.status === "received" && (
+                      <span className="text-blue-600 font-semibold">
+                        Received
+                      </span>
+                    )}
+                    {order?.status?.status === "processing" && (
+                      <span className="text-orange-600 font-semibold">
+                        Processing
+                      </span>
+                    )}
+                    {order?.status?.status === "completed" && (
+                      <span className="text-green-600 font-semibold">
+                        Completed
+                      </span>
+                    )}
+                    {order?.status?.status === "pending" && (
+                      <span className="text-yellow-600 font-semibold">
+                        Pending
+                      </span>
+                    )}
+                    {order?.status?.status === "cancelled" && (
+                      <span className="text-red-600 font-semibold">
+                        Cancelled
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-4 px-6">Rs {order?.subtotal}</td>
+                  <td className="py-4 px-6">
+                    Rs {order?.deliveryCharge}
+                  </td>
+                  <td className="py-4 px-6">
+                    % {order?.discount ? order.discount : "0"}
+                  </td>
+                  <td className="py-4 px-6">
+                    <button
+                      onClick={() =>
+                        updateOrderStatus(order.id, "completed")
+                      }
+                      className="text-green-600 hover:text-green-800"
+                      disabled={loadingOrderId === order.id || order.status?.status === "completed"}
+                    >
+                      <FaCheckCircle />
+                    </button>
+                    <button
+                      onClick={() =>
+                        updateOrderStatus(order.id, "processing")
+                      }
+                      className="text-yellow-600 hover:text-yellow-800 ml-2"
+                      disabled={loadingOrderId === order.id || order.status?.status === "pending"}
+                    >
+                      <FaTimesCircle />
+                    </button>
+                    <button
+                      onClick={() =>
+                        updateOrderStatus(order.id, "cancelled")
+                      }
+                      className="text-red-600 hover:text-red-800 ml-2"
+                      disabled={loadingOrderId === order.id || order.status?.status === "cancelled"}
+                    >
+                      <FaTimesCircle />
+                    </button>
+                    <button
+                      onClick={() => deleteOrder(order.id)}
+                      className="text-red-600 hover:text-red-800 ml-2"
+                      disabled={loadingOrderId === order.id}
+                    >
+                      <FaTrashAlt />
+                    </button>
+                    {loadingOrderId === order.id && (
+                      <FaSyncAlt className="animate-spin ml-2" />
+                    )}
+                  </td>
+                </tr>
+              </CSSTransition>
             ))}
-          </tbody>
+          </TransitionGroup>
         </table>
       )}
 
-      <div className="flex justify-center mt-4">
-        {Array.from({ length: totalPages }, (_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentPage(index + 1)}
-            className={`mx-1 px-3 py-1 rounded ${
-              currentPage === index + 1
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-600"
-            }`}
-          >
-            {index + 1}
-          </button>
-        ))}
+      <div className="flex justify-between items-center mt-4">
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-gray-600 text-white rounded"
+        >
+          Previous
+        </button>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 bg-gray-600 text-white rounded"
+        >
+          Next
+        </button>
       </div>
+
+      {/* Message Popup */}
+      {messagePopup && (
+        <div
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50`}
+        >
+          <div
+            className={`bg-white p-6 rounded-lg shadow-lg`}
+          >
+            <p
+              className={`text-lg ${messagePopup.type === 'success' ? 'text-green-600' : 'text-red-600'}`}
+            >
+              {messagePopup.message}
+            </p>
+            <button
+              onClick={() => setMessagePopup(null)}
+              className="mt-4 px-4 py-2 bg-gray-600 text-white rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

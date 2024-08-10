@@ -54,9 +54,11 @@ model Order {
   items           OrderItem[]
   deliveryCharge  Float
   discount        Float
+  subtotal        Float?         // New field for subtotal
   createdAt       DateTime      @default(now()) @map(name: "created_at")
   updatedAt       DateTime      @updatedAt @map(name: "updated_at")
 }
+
 
 model OrderItem {
   id        String  @default(cuid()) @id

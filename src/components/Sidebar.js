@@ -3,7 +3,7 @@ import { FaListAlt, FaUsers, FaPlus } from "react-icons/fa"; // Import icons
 
 export default function Sidebar() {
   return (
-    <div className="h-screen w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-lg">
+    <div className="h-[100vh] overflow-y-auto w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-lg">
       <div className="flex items-center justify-center mt-10">
         <h1 className="text-2xl font-bold tracking-wide">Dashboard</h1>
       </div>

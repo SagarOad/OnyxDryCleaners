@@ -44,7 +44,14 @@ export async function POST(request) {
       },
     });
 
-    // Create the order with default liveStatusId set to 1
+    // Calculate the subtotal
+    const totalItemsPrice = items.reduce((acc, item) => {
+      return acc + item.quantity * item.unitPrice;
+    }, 0);
+
+    const subtotal = totalItemsPrice - charges.discount + charges.deliveryCharge;
+
+    // Create the order with the calculated subtotal and default liveStatusId set to 1
     const order = await prisma.order.create({
       data: {
         customerId: customer.id,
@@ -53,6 +60,7 @@ export async function POST(request) {
         liveStatusId: "1",  // Assuming "live" has an id of 1
         deliveryCharge: charges.deliveryCharge,
         discount: charges.discount,
+        subtotal: subtotal,  // Add the calculated subtotal
         items: {
           create: items.map((item) => ({
             product: item.product,
