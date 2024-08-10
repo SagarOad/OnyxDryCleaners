@@ -7,6 +7,8 @@ import {
   FaSyncAlt,
   FaTrashAlt,
 } from "react-icons/fa";
+import { FcProcess } from "react-icons/fc";
+
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 
 export default function OrderTable() {
@@ -277,7 +279,7 @@ export default function OrderTable() {
                       className="text-yellow-600 hover:text-yellow-800 ml-2"
                       disabled={loadingOrderId === order.id || order.status?.status === "pending"}
                     >
-                      <FaTimesCircle />
+                      <FcProcess />
                     </button>
                     <button
                       onClick={() =>
@@ -290,7 +292,7 @@ export default function OrderTable() {
                     </button>
                     <button
                       onClick={() => deleteOrder(order.id)}
-                      className="text-red-600 hover:text-red-800 ml-2"
+                      className="text-[#5a5a5a] hover:text-red-800 ml-2"
                       disabled={loadingOrderId === order.id}
                     >
                       <FaTrashAlt />
