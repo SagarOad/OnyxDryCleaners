@@ -9,12 +9,12 @@ datasource db {
 }
 
 model User {
-  id            String       @default(cuid()) @id
-  name          String?
-  email         String?   @unique
-  createdAt     DateTime  @default(now()) @map(name: "created_at")
-  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
-  posts         Post[]
+  id        String    @default(cuid()) @id
+  name      String?
+  email     String?   @unique
+  createdAt DateTime  @default(now()) @map(name: "created_at")
+  updatedAt DateTime  @updatedAt @map(name: "updated_at")
+  posts     Post[]
   @@map(name: "users")
 }
 
@@ -22,14 +22,14 @@ model Post {
   id        String     @default(cuid()) @id
   title     String
   content   String?
-  published Boolean   @default(false)
-  author    User?     @relation(fields: [authorId], references: [id])
+  published Boolean    @default(false)
+  author    User?      @relation(fields: [authorId], references: [id])
   authorId  String?
 }
 
 model Customer {
   id        String    @default(cuid()) @id
-  name      String @unique
+  name      String    @unique
   contact   String
   address   String
   service   String
@@ -43,22 +43,25 @@ model OrderLiveStatus {
 }
 
 model Order {
-  id              String        @default(cuid()) @id
-  customer        Customer      @relation(fields: [customerId], references: [id])
-  customerId      String
-  service         String
-  statusId        String
-  status          OrderStatus   @relation(fields: [statusId], references: [id])
-  liveStatusId    String?
-  liveStatus      OrderLiveStatus?  @relation(fields: [liveStatusId], references: [id])
-  items           OrderItem[]
-  deliveryCharge  Float
-  discount        Float
-  subtotal        Float?         // New field for subtotal
-  createdAt       DateTime      @default(now()) @map(name: "created_at")
-  updatedAt       DateTime      @updatedAt @map(name: "updated_at")
+  id                 String              @default(cuid()) @id
+  customer           Customer            @relation(fields: [customerId], references: [id])
+  customerId         String
+  service            String
+  statusId           String
+  status             OrderStatus         @relation(fields: [statusId], references: [id])
+  liveStatusId       String?
+  liveStatus         OrderLiveStatus?    @relation(fields: [liveStatusId], references: [id])
+  items              OrderItem[]
+  deliveryCharge     Float
+  discount           Float
+  subtotal           Float?              // Field for subtotal
+  outsourcingCompany OutsourcingCompany? @relation(fields: [outsourcingCompanyId], references: [id])
+  outsourcingCompanyId String?           // Foreign key for outsourcing company
+  outsourcingCost    Float?              // Field for outsourcing cost
+  profit             Float?              // Field for profit
+  createdAt          DateTime            @default(now()) @map(name: "created_at")
+  updatedAt          DateTime            @updatedAt @map(name: "updated_at")
 }
-
 
 model OrderItem {
   id        String  @default(cuid()) @id
@@ -74,4 +77,12 @@ model OrderStatus {
   id        String  @default(cuid()) @id
   status    String  @unique
   orders    Order[]
+}
+
+model OutsourcingCompany {
+  id      String  @default(cuid()) @id
+  name    String  @unique
+  contact String
+  address String
+  orders  Order[]
 }

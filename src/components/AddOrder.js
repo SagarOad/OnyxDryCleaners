@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Receipt from "../components/Receipt";
 import axios from "axios";
+import Receipt from "../components/Receipt";
 
 export default function AddOrder() {
   const [order, setOrder] = useState({
@@ -10,8 +10,10 @@ export default function AddOrder() {
     contact: "",
     address: "",
     service: "",
-    items: [{ product: "", quantity: 1, unitPrice: "", amount: 0 }],
+    items: [{ product: "", quantity: 1, unitPrice: 0, amount: 0 }],
     charges: { deliveryCharge: 0, discount: 0 },
+    outsourcingCompanyName: "",
+    outsourcingCost: 0,
   });
 
   const [showModal, setShowModal] = useState(false);
@@ -53,6 +55,8 @@ export default function AddOrder() {
     if (!order.customer) newErrors.customer = "Customer Name is required";
     if (!order.contact) newErrors.contact = "Contact is required";
     if (!order.service) newErrors.service = "Service is required";
+    if (!order.outsourcingCompanyName)
+      newErrors.outsourcingCompanyName = "Outsourcing Company is required";
     if (
       order.items.length === 0 ||
       order.items.some(
@@ -77,20 +81,12 @@ export default function AddOrder() {
         service: order.service,
         items: order.items,
         charges: {
-          subtotal: order.items.reduce((acc, item) => acc + item.amount, 0),
-          taxAmount: 0,
-          totalAmount: (
-            order.items.reduce((acc, item) => acc + item.amount, 0) +
-            parseFloat(order.charges.deliveryCharge) -
-            (order.items.reduce((acc, item) => acc + item.amount, 0) *
-              parseFloat(order.charges.discount)) /
-              100
-          ).toFixed(2),
-          pickupCharge: 0,
           deliveryCharge: parseFloat(order.charges.deliveryCharge) || 0,
           discount: parseFloat(order.charges.discount) || 0,
         },
         status: "received",
+        outsourcingCompanyName: order.outsourcingCompanyName,
+        outsourcingCost: parseFloat(order.outsourcingCost) || 0,
       });
 
       setReceiptData(response.data);
@@ -104,8 +100,10 @@ export default function AddOrder() {
         contact: "",
         address: "",
         service: "",
-        items: [{ product: "", quantity: 1, unitPrice: "", amount: 0 }],
+        items: [{ product: "", quantity: 1, unitPrice: 0, amount: 0 }],
         charges: { deliveryCharge: 0, discount: 0 },
+        outsourcingCompanyName: "",
+        outsourcingCost: 0,
       });
     }
   };
@@ -115,9 +113,10 @@ export default function AddOrder() {
   const discountPercentage = parseFloat(order.charges.discount) || 0;
   const discountAmount = (subtotal * discountPercentage) / 100;
   const totalAmount = (subtotal + deliveryCharge - discountAmount).toFixed(2);
+
   return (
     <>
-      <div className=" flex  justify-left">
+      <div className="flex justify-left">
         <div className="container p-6 mr-4 bg-white rounded-lg shadow-lg max-w-4xl">
           <h2 className="text-2xl font-semibold mb-6 text-blue-800">
             New Order
@@ -171,7 +170,9 @@ export default function AddOrder() {
                 onChange={(e) =>
                   setOrder({ ...order, address: e.target.value })
                 }
-                className="p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
+                className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                  errors.address ? "border-red-500" : "border-gray-300"
+                }`}
               />
             </div>
             <div>
@@ -194,79 +195,83 @@ export default function AddOrder() {
             </div>
           </div>
 
-          {/* Order Details */}
-          <h3 className="text-xl font-semibold text-blue-800 mb-4">
-            Order Details
-          </h3>
-
-          {order.items.map((item, index) => (
-            <div
-              key={index}
-              className="flex flex-col md:flex-row items-center mb-4 gap-2"
+          {/* Items */}
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold mb-4 text-blue-800">Items</h3>
+            {order.items.map((item, index) => (
+              <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <label className="block text-blue-700 font-medium mb-1">
+                    Product
+                  </label>
+                  <input
+                    type="text"
+                    value={item.product}
+                    onChange={(e) =>
+                      handleItemChange(index, "product", e.target.value)
+                    }
+                    className="p-3 w-full border rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-blue-700 font-medium mb-1">
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      handleItemChange(index, "quantity", parseInt(e.target.value))
+                    }
+                    className="p-3 w-full border rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-blue-700 font-medium mb-1">
+                    Unit Price
+                  </label>
+                  <input
+                    type="number"
+                    value={item.unitPrice}
+                    onChange={(e) =>
+                      handleItemChange(index, "unitPrice", parseFloat(e.target.value))
+                    }
+                    className="p-3 w-full border rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-blue-700 font-medium mb-1">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    value={item.amount}
+                    readOnly
+                    className="p-3 w-full border rounded-md bg-gray-100"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveItem(index)}
+                  className="text-red-500 mt-4"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAddItem}
+              className="bg-blue-500 text-white px-4 py-2 rounded"
             >
-              <input
-                type="text"
-                placeholder="Product"
-                value={item.product}
-                onChange={(e) =>
-                  handleItemChange(index, "product", e.target.value)
-                }
-                className={`p-3 border rounded-md w-full md:w-1/4 focus:ring-2 focus:ring-blue-500 ${
-                  errors.items ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-              <input
-                type="number"
-                placeholder="Unit Price"
-                value={item.unitPrice}
-                onChange={(e) =>
-                  handleItemChange(
-                    index,
-                    "unitPrice",
-                    parseFloat(e.target.value)
-                  )
-                }
-                className={`p-3 border rounded-md w-full md:w-1/4 focus:ring-2 focus:ring-blue-500 ${
-                  errors.items ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-              <input
-                type="number"
-                placeholder="Quantity"
-                value={item.quantity}
-                onChange={(e) =>
-                  handleItemChange(
-                    index,
-                    "quantity",
-                    parseFloat(e.target.value) || 0
-                  )
-                }
-                className={`p-3 border rounded-md w-full md:w-1/4 focus:ring-2 focus:ring-blue-500 ${
-                  errors.items ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-
-              <button
-                onClick={() => handleRemoveItem(index)}
-                className="p-2 bg-red-600 text-white rounded-md shadow hover:bg-red-700 focus:ring-2 focus:ring-red-500"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-          {errors.items && (
-            <p className="text-red-500 text-xs mb-4">{errors.items}</p>
-          )}
-
-          <button
-            onClick={handleAddItem}
-            className="p-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 mb-6"
-          >
-            Add Item
-          </button>
+              Add Item
+            </button>
+            {errors.items && (
+              <p className="text-red-500 text-xs mt-1">{errors.items}</p>
+            )}
+          </div>
 
           {/* Charges */}
-          <h3 className="text-xl font-semibold text-blue-800 mb-4">Charges</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-blue-700 font-medium mb-1">
@@ -276,56 +281,97 @@ export default function AddOrder() {
                 type="number"
                 value={order.charges.deliveryCharge}
                 onChange={(e) =>
-                  handleChargeChange("deliveryCharge", e.target.value)
+                  handleChargeChange("deliveryCharge", parseFloat(e.target.value))
                 }
-                className="p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
+                className="p-3 w-full border rounded-md"
               />
             </div>
             <div>
               <label className="block text-blue-700 font-medium mb-1">
-                Discount (%)
+                Discount
               </label>
               <input
                 type="number"
                 value={order.charges.discount}
-                onChange={(e) => handleChargeChange("discount", e.target.value)}
-                className="p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 border-gray-300"
+                onChange={(e) =>
+                  handleChargeChange("discount", parseFloat(e.target.value))
+                }
+                className="p-3 w-full border rounded-md"
               />
             </div>
           </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full p-3 bg-green-600 text-white rounded-md shadow hover:bg-green-700 focus:ring-2 focus:ring-green-500 disabled:bg-gray-300"
-          >
-            {loading ? "Submitting..." : "Submit Order"}
-          </button>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <div className="flex justify-between mb-6">
-            <div className="text-blue-800 font-medium">Subtotal:</div>
-            <div className="text-blue-800">${subtotal.toFixed(2)}</div>
+          {/* Outsourcing Details */}
+          <div className="mb-6">
+            <label className="block text-blue-700 font-medium mb-1">
+              Outsourcing Company Name
+            </label>
+            <input
+              type="text"
+              value={order.outsourcingCompanyName}
+              onChange={(e) =>
+                setOrder({ ...order, outsourcingCompanyName: e.target.value })
+              }
+              className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                errors.outsourcingCompanyName ? "border-red-500" : "border-gray-300"
+              }`}
+            />
+            {errors.outsourcingCompanyName && (
+              <p className="text-red-500 text-xs mt-1">{errors.outsourcingCompanyName}</p>
+            )}
+            <label className="block text-blue-700 font-medium mt-4 mb-1">
+              Outsourcing Cost
+            </label>
+            <input
+              type="number"
+              value={order.outsourcingCost}
+              onChange={(e) =>
+                setOrder({ ...order, outsourcingCost: parseFloat(e.target.value) })
+              }
+              className="p-3 w-full border rounded-md"
+            />
           </div>
-          <div className="flex justify-between mb-6">
-            <div className="text-blue-800 font-medium">Discount:</div>
-            <div className="text-blue-800">-${discountAmount.toFixed(2)}</div>
+
+          {/* Summary */}
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold mb-4 text-blue-800">Summary</h3>
+            <div className="grid grid-cols-2 gap-4 mb-2">
+              <div className="font-medium">Subtotal</div>
+              <div className="text-right">{subtotal.toFixed(2)}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-2">
+              <div className="font-medium">Delivery Charge</div>
+              <div className="text-right">{deliveryCharge.toFixed(2)}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-2">
+              <div className="font-medium">Discount</div>
+              <div className="text-right">-{discountAmount.toFixed(2)}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-2">
+              <div className="font-medium">Total</div>
+              <div className="text-right">{totalAmount}</div>
+            </div>
           </div>
-          <div className="flex justify-between mb-6">
-            <div className="text-blue-800 mr-10 font-medium">Delivery Charge:</div>
-            <div className="text-blue-800">${deliveryCharge.toFixed(2)}</div>
-          </div>
-          <div className="flex justify-between mb-6">
-            <div className="text-blue-800 font-medium">Total:</div>
-            <div className="text-blue-800 font-bold">${totalAmount}</div>
+
+          {/* Submit Button */}
+          <div className="mb-6">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`bg-blue-500 text-white px-4 py-2 rounded ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {loading ? "Submitting..." : "Submit Order"}
+            </button>
           </div>
         </div>
       </div>
-      {showModal && (
+
+      {showModal && receiptData && (
         <Receipt
           data={receiptData}
-          // customerName={customerName}
-          totalAmount={totalAmount}
           onClose={() => setShowModal(false)}
         />
       )}

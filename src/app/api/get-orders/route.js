@@ -3,19 +3,36 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(request) {
   try {
-    // Fetch all orders, including related data
+    // Extract query parameters for pagination
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page")) || 1;
+    const pageSize = parseInt(searchParams.get("pageSize")) || 10;
+
+    // Calculate the offset for pagination
+    const skip = (page - 1) * pageSize;
+
+    // Fetch orders with pagination, including related data
     const orders = await prisma.order.findMany({
+      skip,
+      take: pageSize,
       include: {
         customer: true,
         items: true,
         status: true,
-        liveStatus: true, // Assuming you want to include live status
+        liveStatus: true,
       },
     });
 
-    return NextResponse.json(orders);
+    // Fetch total count of orders for pagination
+    const totalOrders = await prisma.order.count();
+
+    return NextResponse.json({
+      orders,
+      totalOrders,
+      totalPages: Math.ceil(totalOrders / pageSize),
+    });
   } catch (error) {
     console.error("Error fetching orders:", error);
     return NextResponse.json(

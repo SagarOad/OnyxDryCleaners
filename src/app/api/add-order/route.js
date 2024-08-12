@@ -14,6 +14,8 @@ export async function POST(request) {
       items,
       charges,
       status,
+      outsourcingCompanyName,
+      outsourcingCost,
     } = body;
 
     // Check if the status exists
@@ -44,6 +46,20 @@ export async function POST(request) {
       },
     });
 
+    // Find or create the outsourcing company
+    const outsourcingCompany = await prisma.outsourcingCompany.upsert({
+      where: { name: outsourcingCompanyName },
+      update: {
+        contact: "N/A", // Assuming contact is unchanged or provided
+        address: "N/A", // Assuming address is unchanged or provided
+      },
+      create: {
+        name: outsourcingCompanyName,
+        contact: "N/A", // Default contact, should be provided in request
+        address: "N/A", // Default address, should be provided in request
+      },
+    });
+
     // Calculate the subtotal
     const totalItemsPrice = items.reduce((acc, item) => {
       return acc + item.quantity * item.unitPrice;
@@ -51,16 +67,22 @@ export async function POST(request) {
 
     const subtotal = totalItemsPrice - charges.discount + charges.deliveryCharge;
 
-    // Create the order with the calculated subtotal and default liveStatusId set to 1
+    // Calculate the profit
+    const profit = subtotal - outsourcingCost;
+
+    // Create the order with the calculated subtotal, outsourcing details, and profit
     const order = await prisma.order.create({
       data: {
         customerId: customer.id,
         service,
         statusId: statusRecord.id,
-        liveStatusId: "1",  // Assuming "live" has an id of 1
+        liveStatusId: "1", // Assuming "live" has an id of 1
         deliveryCharge: charges.deliveryCharge,
         discount: charges.discount,
-        subtotal: subtotal,  // Add the calculated subtotal
+        subtotal: subtotal, // Add the calculated subtotal
+        outsourcingCompanyId: outsourcingCompany.id, // Add the outsourcing company
+        outsourcingCost: outsourcingCost, // Add the outsourcing cost
+        profit: profit, // Add the calculated profit
         items: {
           create: items.map((item) => ({
             product: item.product,
@@ -75,6 +97,7 @@ export async function POST(request) {
         items: true,
         status: true,
         liveStatus: true,
+        outsourcingCompany: true,
       },
     });
 

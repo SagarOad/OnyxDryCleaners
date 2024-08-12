@@ -8,7 +8,6 @@ import {
   FaTrashAlt,
 } from "react-icons/fa";
 import { FcProcess } from "react-icons/fc";
-
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 
 export default function OrderTable() {
@@ -17,30 +16,39 @@ export default function OrderTable() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(10);
-  const [loadingOrderId, setLoadingOrderId] = useState(null);
-  const [loadingStatus, setLoadingStatus] = useState("");
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingOrderId, setLoadingOrderId] = useState(null);
   const [messagePopup, setMessagePopup] = useState(null);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (page) => {
     try {
-      const response = await axios.get("/api/get-orders");
-      setOrders(response.data);
+      setLoading(true);
+      const response = await axios.get("/api/get-orders", {
+        params: {
+          page,
+          pageSize: ordersPerPage,
+          statusFilter, // Include status filter
+          searchQuery,  // Include search query
+        },
+      });
+      setOrders(response.data.orders);
+      setTotalPages(response.data.totalPages);
     } catch (error) {
       console.error("Error fetching orders:", error);
     } finally {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    fetchOrders(currentPage);
+  }, [currentPage, statusFilter, searchQuery]);
+  
 
   const deleteOrder = async (orderId) => {
     setLoadingOrderId(orderId);
-    setLoadingStatus("delete");
-
     try {
       const response = await axios.post("/api/update-order-live-status", {
         orderId,
@@ -49,19 +57,14 @@ export default function OrderTable() {
 
       const updatedOrder = response.data;
 
-      // Animation for row removal
-      setTimeout(() => {
-        setOrders((prevOrders) =>
-          prevOrders.filter((order) => order.id !== updatedOrder.id)
-        );
-      }, 300);
+      setOrders((prevOrders) =>
+        prevOrders.filter((order) => order.id !== updatedOrder.id)
+      );
 
       setMessagePopup({
         type: "success",
         message: "Order deleted successfully!",
       });
-
-      console.log("Order deleted successfully:", updatedOrder);
     } catch (error) {
       console.error("Failed to delete order:", error);
       setMessagePopup({
@@ -70,14 +73,11 @@ export default function OrderTable() {
       });
     } finally {
       setLoadingOrderId(null);
-      setLoadingStatus("");
     }
   };
 
   const updateOrderStatus = async (orderId, status) => {
     setLoadingOrderId(orderId);
-    setLoadingStatus(status);
-
     try {
       const response = await axios.post("/api/update-order-status", {
         orderId,
@@ -85,6 +85,7 @@ export default function OrderTable() {
       });
 
       const updatedOrder = response.data;
+
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === orderId
@@ -97,8 +98,6 @@ export default function OrderTable() {
         type: "success",
         message: `Order ${status} successfully!`,
       });
-
-      console.log("Order status updated successfully:", updatedOrder);
     } catch (error) {
       console.error("Failed to update order status:", error);
       setMessagePopup({
@@ -107,30 +106,27 @@ export default function OrderTable() {
       });
     } finally {
       setLoadingOrderId(null);
-      setLoadingStatus("");
     }
   };
 
   const filteredOrders = orders
-    .filter((order) =>
-      statusFilter === "all" ? true : order?.status?.status === statusFilter
-    )
-    .filter((order) =>
-      searchQuery === ""
-        ? true
-        : order?.customer?.name
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          order?.service.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-  const indexOfLastOrder = currentPage * ordersPerPage;
-  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentOrders = filteredOrders.slice(
-    indexOfFirstOrder,
-    indexOfLastOrder
+  .filter((order) =>
+    statusFilter === "all" ? true : order?.status?.status === statusFilter
+  )
+  .filter((order) =>
+    searchQuery === ""
+      ? true
+      : order?.customer?.name
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        order?.service.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+
+
+
+  const indexOfFirstOrder = (currentPage - 1) * ordersPerPage;
+  const currentOrders = orders; // No need to slice, as orders are already paginated
+
 
   return (
     <div>
@@ -209,23 +205,24 @@ export default function OrderTable() {
         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
           <thead className="bg-blue-600 text-white">
             <tr>
-              <th className="py-4 px-6 font-semibold">#</th>
-              <th className="py-4 px-6 font-semibold">Customer</th>
-              <th className="py-4 px-6 font-semibold">Service</th>
-              <th className="py-4 px-6 font-semibold">Status</th>
-              <th className="py-4 px-6 font-semibold">Subtotal</th>
-              <th className="py-4 px-6 font-semibold">Delivery Charge</th>
-              <th className="py-4 px-6 font-semibold">Discount</th>
-              <th className="py-4 px-6 font-semibold">Actions</th>
+              <th className="py-4 px-6 font-semibold text-left">#</th>
+              <th className="py-4 px-6 font-semibold text-left">Customer</th>
+              <th className="py-4 px-6 font-semibold text-left">Service</th>
+              <th className="py-4 px-6 font-semibold text-left">Status</th>
+              <th className="py-4 px-6 font-semibold text-left">Subtotal</th>
+              <th className="py-4 px-6 font-semibold text-left">
+                Delivery Charge
+              </th>
+              <th className="py-4 px-6 font-semibold text-left">Discount</th>
+              <th className="py-4 px-6 font-semibold text-left">Create At</th>
+              <th className="py-4 px-6 font-semibold text-left">Actions</th>
             </tr>
           </thead>
           <TransitionGroup component="tbody">
-            {currentOrders.map((order, index) => (
+            {filteredOrders.map((order, index) => (
               <CSSTransition key={order.id} timeout={300} classNames="fade">
                 <tr className="border-b">
-                  <td className="py-4 px-6">
-                    {indexOfFirstOrder + index + 1}
-                  </td>
+                  <td className="py-4 px-6">{indexOfFirstOrder + index + 1}</td>
                   <td className="py-4 px-6">{order?.customer.name}</td>
                   <td className="py-4 px-6">{order?.service}</td>
                   <td className="py-4 px-6">
@@ -244,62 +241,55 @@ export default function OrderTable() {
                         Completed
                       </span>
                     )}
-                    {order?.status?.status === "pending" && (
-                      <span className="text-yellow-600 font-semibold">
-                        Pending
-                      </span>
-                    )}
                     {order?.status?.status === "cancelled" && (
                       <span className="text-red-600 font-semibold">
                         Cancelled
                       </span>
                     )}
                   </td>
-                  <td className="py-4 px-6">Rs {order?.subtotal}</td>
+                  <td className="py-4 px-6">{order.subtotal}</td>
+                  <td className="py-4 px-6">{order.deliveryCharge}</td>
+                  <td className="py-4 px-6">{order.discount || "-"}</td>
                   <td className="py-4 px-6">
-                    Rs {order?.deliveryCharge}
+                    {new Date(order.createdAt).toLocaleDateString("en-GB")}
                   </td>
-                  <td className="py-4 px-6">
-                    % {order?.discount ? order.discount : "0"}
-                  </td>
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 flex space-x-2">
                     <button
-                      onClick={() =>
-                        updateOrderStatus(order.id, "completed")
-                      }
-                      className="text-green-600 hover:text-green-800"
-                      disabled={loadingOrderId === order.id || order.status?.status === "completed"}
+                      onClick={() => updateOrderStatus(order.id, "completed")}
+                      disabled={loadingOrderId === order.id}
+                      className={`${
+                        loadingOrderId === order.id ? "opacity-50" : ""
+                      }`}
                     >
-                      <FaCheckCircle />
+                      <FaCheckCircle className="text-green-600 hover:text-green-700" />
                     </button>
                     <button
-                      onClick={() =>
-                        updateOrderStatus(order.id, "processing")
-                      }
-                      className="text-yellow-600 hover:text-yellow-800 ml-2"
-                      disabled={loadingOrderId === order.id || order.status?.status === "pending"}
+                      onClick={() => updateOrderStatus(order.id, "cancelled")}
+                      disabled={loadingOrderId === order.id}
+                      className={`${
+                        loadingOrderId === order.id ? "opacity-50" : ""
+                      }`}
+                    >
+                      <FaTimesCircle className="text-red-600 hover:text-red-700" />
+                    </button>
+                    <button
+                      onClick={() => updateOrderStatus(order.id, "processing")}
+                      disabled={loadingOrderId === order.id}
+                      className={`${
+                        loadingOrderId === order.id ? "opacity-50" : ""
+                      }`}
                     >
                       <FcProcess />
                     </button>
                     <button
-                      onClick={() =>
-                        updateOrderStatus(order.id, "cancelled")
-                      }
-                      className="text-red-600 hover:text-red-800 ml-2"
-                      disabled={loadingOrderId === order.id || order.status?.status === "cancelled"}
-                    >
-                      <FaTimesCircle />
-                    </button>
-                    <button
                       onClick={() => deleteOrder(order.id)}
-                      className="text-[#5a5a5a] hover:text-red-800 ml-2"
                       disabled={loadingOrderId === order.id}
+                      className={`${
+                        loadingOrderId === order.id ? "opacity-50" : ""
+                      }`}
                     >
-                      <FaTrashAlt />
+                      <FaTrashAlt className="text-gray-600 hover:text-gray-700" />
                     </button>
-                    {loadingOrderId === order.id && (
-                      <FaSyncAlt className="animate-spin ml-2" />
-                    )}
                   </td>
                 </tr>
               </CSSTransition>
@@ -308,46 +298,45 @@ export default function OrderTable() {
         </table>
       )}
 
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex justify-center mt-4">
         <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          onClick={() => setCurrentPage(currentPage - 1)}
           disabled={currentPage === 1}
-          className="px-4 py-2 bg-gray-600 text-white rounded"
+          className="mr-2 p-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
         >
           Previous
         </button>
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
+        {Array.from({ length: totalPages }, (_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentPage(index + 1)}
+            className={`mr-2 p-2 rounded ${
+              currentPage === index + 1
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 hover:bg-gray-300"
+            }`}
+          >
+            {index + 1}
+          </button>
+        ))}
         <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          onClick={() => setCurrentPage(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="px-4 py-2 bg-gray-600 text-white rounded"
+          className="p-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
         >
           Next
         </button>
       </div>
 
-      {/* Message Popup */}
       {messagePopup && (
         <div
-          className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50`}
+          className={`fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 p-4 rounded ${
+            messagePopup.type === "success"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
         >
-          <div
-            className={`bg-white p-6 rounded-lg shadow-lg`}
-          >
-            <p
-              className={`text-lg ${messagePopup.type === 'success' ? 'text-green-600' : 'text-red-600'}`}
-            >
-              {messagePopup.message}
-            </p>
-            <button
-              onClick={() => setMessagePopup(null)}
-              className="mt-4 px-4 py-2 bg-gray-600 text-white rounded"
-            >
-              Close
-            </button>
-          </div>
+          {messagePopup.message}
         </div>
       )}
     </div>
