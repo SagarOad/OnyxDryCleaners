@@ -2,6 +2,7 @@ import AddOrder from "@/components/AddOrder";
 import Sidebar from "@/components/Sidebar";
 
 export default function Home() {
+
   return (
     <div className="flex">
       <Sidebar />
