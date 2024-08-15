@@ -253,7 +253,7 @@ export default function AddOrder() {
                 <button
                   type="button"
                   onClick={() => handleRemoveItem(index)}
-                  className="text-red-500 mt-4"
+                  className="text-white bg-red-500 py-3 mt-4"
                 >
                   Remove
                 </button>
@@ -332,8 +332,24 @@ export default function AddOrder() {
             />
           </div>
 
-          {/* Summary */}
+
+          {/* Submit Button */}
           <div className="mb-6">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`bg-blue-500 text-white px-4 py-2 rounded ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {loading ? "Submitting..." : "Submit Order"}
+            </button>
+          </div>
+        </div>
+
+        <div>
+        <div className="mb-6 bg-white p-6">
             <h3 className="text-xl font-semibold mb-4 text-blue-800">Summary</h3>
             <div className="grid grid-cols-2 gap-4 mb-2">
               <div className="font-medium">Subtotal</div>
@@ -351,20 +367,6 @@ export default function AddOrder() {
               <div className="font-medium">Total</div>
               <div className="text-right">{totalAmount}</div>
             </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="mb-6">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={loading}
-              className={`bg-blue-500 text-white px-4 py-2 rounded ${
-                loading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              {loading ? "Submitting..." : "Submit Order"}
-            </button>
           </div>
         </div>
       </div>
