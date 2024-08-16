@@ -1,29 +1,28 @@
-// app/customers/CustomerTableServer.js
-import prisma from '../../lib/prisma'; // Adjust path as necessary
-import CustomerTableClient from './CustomerTable';
+import prisma from '../../lib/prisma'; // Adjust the path as necessary
+import OrderTableClient from './OrderTableClient';
 
-async function fetchCustomers() {
+// Function to fetch orders from the database
+async function fetchOrders() {
   try {
-    return await prisma.customer.findMany({
+    return await prisma.order.findMany({
       select: {
         id: true,
-        name: true,
-        contact: true,
-        address: true,
+        orderId: true,
+        customerName: true,
         service: true,
+        status: true,
       },
     });
   } catch (error) {
-    console.error("Failed to fetch customers:", error);
+    console.error("Failed to fetch orders:", error);
     return [];
   }
 }
 
-export default async function CustomerTableServer() {
-    
-  const customers = await fetchCustomers();
+export default async function OrderTableServer() {
+  // Fetch orders from the database
+  const orders = await fetchOrders();
 
-  return (
-    <CustomerTableClient initialData={customers} />
-  );
+  // Pass the fetched data to the client component
+  return <OrderTableClient initialData={orders} />;
 }
