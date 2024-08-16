@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import axios from "axios";
-import Receipt from "../components/Receipt";
+import ReceiptClient from "./ReceiptClient";
 
 export default function AddOrder() {
   const [order, setOrder] = useState({
@@ -372,7 +372,7 @@ export default function AddOrder() {
       </div>
 
       {showModal && receiptData && (
-        <Receipt
+        <ReceiptClient
           data={receiptData}
           onClose={() => setShowModal(false)}
         />
