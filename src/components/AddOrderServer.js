@@ -37,7 +37,7 @@ async function fetchOrderDetails() {
 
 export default async function AddOrderServer() {
 
-    console.log("AddOrderServer")
+
   const orders = await fetchOrderDetails();
 
   return (
