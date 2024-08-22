@@ -1,10 +1,10 @@
-// app/orders/AddOrderServer.js
 import prisma from '../../lib/prisma'; // Adjust path as necessary
 import AddOrderClient from './AddOrderClient'; // Your client component
 
+// Fetch order details from the database
 async function fetchOrderDetails() {
   try {
-    return await prisma.order.findMany({
+    const orders = await prisma.order.findMany({
       select: {
         id: true,
         customer: {
@@ -29,18 +29,23 @@ async function fetchOrderDetails() {
         },
       },
     });
+    return orders;
   } catch (error) {
-    console.error("Failed to fetch orders:", error);
+    console.error('Failed to fetch orders:', error);
     return [];
   }
 }
 
 export default async function AddOrderServer() {
-
-
-  const orders = await fetchOrderDetails();
+  const orders = await fetchOrderDetails(); // Fetch orders from the database
 
   return (
-    <AddOrderClient initialData={orders} />
+    <>
+      {orders && orders.length > 0 ? (
+        <AddOrderClient initialData={orders} />
+      ) : (
+        <p>No orders found.</p>
+      )}
+    </>
   );
 }
