@@ -86,3 +86,12 @@ model OutsourcingCompany {
   address String
   orders  Order[]
 }
+
+model Admin {
+  id        String    @default(cuid()) @id
+  email     String    @unique
+  password  String    // Hashed password
+  role      String    @default("admin")
+  createdAt DateTime  @default(now()) @map(name: "created_at")
+  updatedAt DateTime  @updatedAt @map(name: "updated_at")
+}
