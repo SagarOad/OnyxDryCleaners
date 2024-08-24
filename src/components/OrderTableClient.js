@@ -1,36 +1,35 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { CSSTransition, TransitionGroup } from "react-transition-group";
 
-const OrderTableClient = () => {
-  const [orders, setOrders] = useState([]);
+const CustomerTableClient = () => {
+  const [customers, setCustomers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const ordersPerPage = 10;
 
   useEffect(() => {
-    fetchOrdersClient();
-  }, [currentPage, statusFilter, searchQuery]);
+    fetchCustomers();
+  }, [currentPage, searchQuery]);
 
-  const fetchOrdersClient = async () => {
+  const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/get-orders', {
+      const response = await axios.get("/api/get-customers", {
         params: {
           page: currentPage,
-          pageSize: 10,
-          statusFilter,
+          pageSize: ordersPerPage,
           searchQuery,
         },
       });
-      setOrders(response.data.orders);
+      setCustomers(response.data.customers);
       setTotalPages(response.data.totalPages);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error("Error fetching customers:", error);
     } finally {
       setLoading(false);
     }
@@ -38,30 +37,43 @@ const OrderTableClient = () => {
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
-    setCurrentPage(1); // Reset to the first page on search
-  };
-
-  const handleStatusFilter = (e) => {
-    setStatusFilter(e.target.value);
-    setCurrentPage(1); // Reset to the first page on filter change
+    setCurrentPage(1); // Reset to first page on search
   };
 
   const renderPagination = () => {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(
+    return (
+      <div className="flex justify-center mt-4 space-x-2">
         <button
-          key={i}
-          onClick={() => setCurrentPage(i)}
-          className={`px-3 py-1 mx-1 ${
-            currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'
-          }`}
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          className={`px-3 py-1 ${
+            currentPage === 1 ? "bg-gray-400" : "bg-blue-600 text-white"
+          } rounded-md`}
+          disabled={currentPage === 1}
         >
-          {i}
+          Previous
         </button>
-      );
-    }
-    return pages;
+        {Array.from({ length: totalPages }).map((_, index) => (
+          <button
+            key={index + 1}
+            onClick={() => setCurrentPage(index + 1)}
+            className={`px-3 py-1 mx-1 ${
+              currentPage === index + 1 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"
+            } rounded-md`}
+          >
+            {index + 1}
+          </button>
+        ))}
+        <button
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          className={`px-3 py-1 ${
+            currentPage === totalPages ? "bg-gray-400" : "bg-blue-600 text-white"
+          } rounded-md`}
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -75,45 +87,87 @@ const OrderTableClient = () => {
           onChange={handleSearch}
           className="px-3 py-2 border border-gray-300 rounded-md"
         />
-        <select value={statusFilter} onChange={handleStatusFilter} className="px-3 py-2 border border-gray-300 rounded-md">
-          <option value="all">All</option>
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
-          {/* Add more statuses as needed */}
-        </select>
       </div>
 
-      {/* Table */}
+      {/* Loading Placeholder */}
       {loading ? (
-        <div className="animate-pulse">Loading...</div>
+        <div className="animate-pulse">
+          <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+            <thead className="bg-blue-600 text-white">
+              <tr>
+                <th className="py-4 px-6 font-semibold uppercase text-sm">
+                  <div className="bg-gray-300 h-6 rounded w-24"></div>
+                </th>
+                <th className="py-4 px-6 font-semibold uppercase text-sm">
+                  <div className="bg-gray-300 h-6 rounded w-48"></div>
+                </th>
+                <th className="py-4 px-6 font-semibold uppercase text-sm">
+                  <div className="bg-gray-300 h-6 rounded w-36"></div>
+                </th>
+                <th className="py-4 px-6 font-semibold uppercase text-sm">
+                  <div className="bg-gray-300 h-6 rounded w-52"></div>
+                </th>
+                <th className="py-4 px-6 font-semibold uppercase text-sm">
+                  <div className="bg-gray-300 h-6 rounded w-36"></div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: ordersPerPage }).map((_, index) => (
+                <tr key={index} className="border-b last:border-none">
+                  <td className="py-4 px-6">
+                    <div className="bg-gray-200 h-4 rounded w-12"></div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="bg-gray-200 h-4 rounded w-48"></div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="bg-gray-200 h-4 rounded w-36"></div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="bg-gray-200 h-4 rounded w-52"></div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="bg-gray-200 h-4 rounded w-36"></div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
+        // Customer Table
         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
           <thead className="bg-blue-600 text-white">
             <tr>
-              <th className="py-2 px-4">#</th>
               <th className="py-2 px-4">Customer</th>
               <th className="py-2 px-4">Service</th>
               <th className="py-2 px-4">Status</th>
               <th className="py-2 px-4">Created At</th>
+              <th className="py-2 px-4">Contact</th>
             </tr>
           </thead>
           <TransitionGroup component="tbody">
-            {orders.length > 0 ? (
-              orders.map((order, index) => (
-                <CSSTransition key={order.id} timeout={300} classNames="fade">
+            {customers.length > 0 ? (
+              customers.map((customer) => (
+                <CSSTransition key={customer.id} timeout={300} classNames="fade">
                   <tr className="border-b">
-                    <td className="py-2 px-4">{(currentPage - 1) * 10 + index + 1}</td>
-                    <td className="py-2 px-4">{order.customer.name}</td>
-                    <td className="py-2 px-4">{order.service}</td>
-                    <td className="py-2 px-4">{order.status.status}</td>
-                    <td className="py-2 px-4">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td className="py-2 px-4">{customer.name}</td>
+                    <td className="py-2 px-4">{customer.service}</td>
+                    <td className="py-2 px-4">{customer.orders[0]?.status.status || "N/A"}</td>
+                    <td className="py-2 px-4">
+                      {customer.orders[0]?.createdAt
+                        ? new Date(customer.orders[0].createdAt).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+                    <td className="py-2 px-4">{customer.contact}</td>
                   </tr>
                 </CSSTransition>
               ))
             ) : (
               <tr>
                 <td colSpan="5" className="py-4 px-6 text-center">
-                  No orders found
+                  No customers found
                 </td>
               </tr>
             )}
@@ -122,9 +176,9 @@ const OrderTableClient = () => {
       )}
 
       {/* Pagination */}
-      <div className="flex justify-center mt-4">{renderPagination()}</div>
+      {renderPagination()}
     </div>
   );
 };
 
-export default OrderTableClient;
+export default CustomerTableClient;

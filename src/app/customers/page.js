@@ -1,5 +1,4 @@
 import Sidebar from "../../components/Sidebar";
-// import CustomerTable from "../../components/CustomerTable";
 import CustomerTableServer from "@/components/CustomerTableServer";
 
 export default function Customers() {
