@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import ReceiptClient from "./ReceiptClient";
 
@@ -28,6 +28,8 @@ export default function AddOrderClient({ initialData }) {
   const [loading, setLoading] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
   const [errors, setErrors] = useState({});
+  const [customerCount, setCustomerCount] = useState(null);
+
 
   // Function to handle item changes
   const handleItemChange = (index, field, value) => {
@@ -123,6 +125,21 @@ export default function AddOrderClient({ initialData }) {
       });
     }
   };
+
+  useEffect(() => {
+    // Fetch customer count from the API
+    const fetchCustomerCount = async () => {
+      try {
+        const response = await fetch("/api/customer-count");
+        const result = await response.json();
+        setCustomerCount(result.count);
+      } catch (error) {
+        console.error("Failed to fetch customer count:", error);
+      }
+    };
+
+    fetchCustomerCount();
+  }, []);
 
   // Calculate totals
   const subtotal = order.items.reduce((acc, item) => acc + item.amount, 0);
@@ -344,7 +361,7 @@ export default function AddOrderClient({ initialData }) {
 
   {/* Modal for Receipt */}
   {showModal && receiptData && (
-    <ReceiptClient data={receiptData} onClose={() => setShowModal(false)} />
+    <ReceiptClient data={receiptData} customerCount={customerCount} deliveryCharge={deliveryCharge} onClose={() => setShowModal(false)} />
   )}
 </>
 

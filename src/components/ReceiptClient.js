@@ -1,18 +1,18 @@
 // app/receipt/ReceiptClient.js
 "use client"; // Client-side component
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import logo from "@/assets/onyxlogo.jpg";
 
-const ReceiptClient = ({ receiptNumber, data, totalAmount, discount, onClose, onConfirm }) => {
+const ReceiptClient = ({ data, totalAmount, customerCount, discount, onClose, onConfirm }) => {
+  
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div className="w-96 rounded bg-white px-6 py-8 shadow-lg">
         <div className="flex flex-col items-center mb-4">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg"
-            alt="Logo"
-            className="w-20 mb-2"
-          />
+          <Image src={logo} alt="Logo" className="w-20 mb-2" />
           <h4 className="text-xl font-semibold">Onyx Dry Cleaners</h4>
           <p className="text-sm text-gray-600 text-center">
             Abdullah Sports City Qasimabad, Hyderabad, Sindh
@@ -21,8 +21,8 @@ const ReceiptClient = ({ receiptNumber, data, totalAmount, discount, onClose, on
 
         <div className="border-t border-gray-300 py-4">
           <p className="flex justify-between text-sm">
-            <span className="font-medium">Receipt No.:</span>
-            <span>{receiptNumber}</span>
+            <span className="font-medium">Customer Count:</span>
+            <span>00{customerCount}</span>
           </p>
           <p className="flex justify-between text-sm">
             <span className="font-medium">Service Type:</span>
@@ -30,7 +30,7 @@ const ReceiptClient = ({ receiptNumber, data, totalAmount, discount, onClose, on
           </p>
           <p className="flex justify-between text-sm">
             <span className="font-medium">Host:</span>
-            <span>Jane Doe</span>
+            <span>Vijay Kumar</span>
           </p>
           <p className="flex justify-between text-sm">
             <span className="font-medium">Customer:</span>
@@ -43,8 +43,9 @@ const ReceiptClient = ({ receiptNumber, data, totalAmount, discount, onClose, on
             <thead>
               <tr>
                 <th className="text-left py-2">Product</th>
-                <th className="text-left py-2">QTY</th>
-                <th className="text-left py-2">Total</th>
+                <th className="text-center py-2">QTY</th>
+                <th className="text-right py-2">Unit Price</th>
+                <th className="text-right py-2">Delivery Charge</th>
               </tr>
             </thead>
             <tbody>
@@ -54,25 +55,26 @@ const ReceiptClient = ({ receiptNumber, data, totalAmount, discount, onClose, on
                     <td className="py-2">{item.product}</td>
                     <td className="py-2 text-center">{item.quantity}</td>
                     <td className="py-2 text-right">{item.unitPrice}</td>
+                    <td className="py-2 text-right">{item.deliveryCharge !== undefined ? item.deliveryCharge : 0}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="3" className="py-2 text-center">
+                  <td colSpan="4" className="py-2 text-center">
                     No items
                   </td>
                 </tr>
               )}
               {discount && (
                 <tr>
-                  <td colSpan="2" className="py-2 font-medium text-right">
+                  <td colSpan="3" className="py-2 font-medium text-right">
                     Discount
                   </td>
                   <td className="py-2 text-right">-{discount}</td>
                 </tr>
               )}
               <tr className="border-t border-gray-300">
-                <td colSpan="2" className="py-2 font-medium text-right">
+                <td colSpan="3" className="py-2 font-medium text-right">
                   Total Amount
                 </td>
                 <td className="py-2 text-right">{totalAmount}</td>
