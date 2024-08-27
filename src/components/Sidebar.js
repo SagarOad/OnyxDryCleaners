@@ -10,7 +10,7 @@ export default function Sidebar() {
   const isActive = (path) => pathname === path;
 
   return (
-    <div className="h-[100vh] overflow-y-auto w-64 bg-gray-900 text-white shadow-lg">
+    <div className=" overflow-y-auto w-64 bg-gray-900 text-white shadow-lg">
       <div className="flex items-center justify-center mt-10">
         <h1 className="text-2xl font-bold tracking-wide">Dashboard</h1>
       </div>
