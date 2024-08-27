@@ -30,8 +30,18 @@ body {
     rgb(var(--background-start-rgb));
 }
 
+td {
+  color: black !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+
+.receipt-container {
+  height: 80vh;
+    overflow-y: scroll;
 }

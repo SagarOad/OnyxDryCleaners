@@ -93,7 +93,7 @@ export default function Home() {
   return (
     <div className="flex">
       <Sidebar />
-      <div className="flex flex-col w-[87%] p-8 bg-gray-50 h-[100vh]">
+      <div className="flex flex-col w-[87%] p-8 bg-gray-50">
         <h1 className="text-5xl font-bold mb-10 text-center text-blue-600">Admin Dashboard</h1>
         
         {/* Summary Cards */}

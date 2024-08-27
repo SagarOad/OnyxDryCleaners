@@ -1,8 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Select from "react-select";
 import axios from "axios";
 import ReceiptClient from "./ReceiptClient";
+
+const productOptions = [
+  { label: "Shirt", value: "Shirt", price: 5 },
+  { label: "Pants", value: "Pants", price: 7 },
+  { label: "Jacket", value: "Jacket", price: 15 },
+  { label: "Dress", value: "Dress", price: 12 },
+];
 
 export default function AddOrderClient({ initialData }) {
   const [order, setOrder] = useState({
@@ -10,12 +18,7 @@ export default function AddOrderClient({ initialData }) {
     contact: initialData?.customer?.contact || "",
     address: "",
     service: initialData?.service || "",
-    items: initialData?.items?.map((item) => ({
-      product: item.product || "",
-      quantity: item.quantity || 1,
-      unitPrice: item.unitPrice || 0,
-      amount: item.amount || 0,
-    })) || [{ product: "", quantity: 1, unitPrice: 0, amount: 0 }],
+    items: [],
     charges: {
       deliveryCharge: initialData?.deliveryCharge || 0,
       discount: initialData?.discount || 0,
@@ -30,41 +33,19 @@ export default function AddOrderClient({ initialData }) {
   const [errors, setErrors] = useState({});
   const [customerCount, setCustomerCount] = useState(null);
 
+  // Handle product selection
+  const handleProductChange = (selectedOptions) => {
+    const items = selectedOptions.map((option) => ({
+      product: option.label,
+      quantity: 1,
+      unitPrice: option.price,
+      amount: option.price,
+    }));
 
-  // Function to handle item changes
-  const handleItemChange = (index, field, value) => {
-    const updatedItems = [...order.items];
-    updatedItems[index][field] = value;
-    if (field === "quantity" || field === "unitPrice") {
-      updatedItems[index].amount =
-        updatedItems[index].quantity * updatedItems[index].unitPrice;
-    }
-    setOrder({ ...order, items: updatedItems });
+    setOrder({ ...order, items });
   };
 
-  // Function to handle charges changes
-  const handleChargeChange = (field, value) => {
-    setOrder({ ...order, charges: { ...order.charges, [field]: value } });
-  };
-
-  // Add a new item to the order
-  const handleAddItem = () => {
-    setOrder({
-      ...order,
-      items: [
-        ...order.items,
-        { product: "", quantity: 1, unitPrice: 0, amount: 0 },
-      ],
-    });
-  };
-
-  // Remove an item from the order
-  const handleRemoveItem = (index) => {
-    const updatedItems = order.items.filter((_, i) => i !== index);
-    setOrder({ ...order, items: updatedItems });
-  };
-
-  // Validation for the form
+  // Validate the form
   const validateForm = () => {
     const newErrors = {};
     if (!order.customer) newErrors.customer = "Customer Name is required";
@@ -72,19 +53,14 @@ export default function AddOrderClient({ initialData }) {
     if (!order.service) newErrors.service = "Service is required";
     if (!order.outsourcingCompanyName)
       newErrors.outsourcingCompanyName = "Outsourcing Company is required";
-    if (
-      order.items.length === 0 ||
-      order.items.some(
-        (item) => !item.product || !item.unitPrice || !item.quantity
-      )
-    ) {
-      newErrors.items = "At least one order detail is required";
+    if (order.items.length === 0) {
+      newErrors.items = "At least one product must be selected";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Form submission logic
+  // Handle form submission
   const handleSubmit = async () => {
     if (!validateForm()) return;
     setLoading(true);
@@ -105,7 +81,6 @@ export default function AddOrderClient({ initialData }) {
         outsourcingCost: parseFloat(order.outsourcingCost) || 0,
       });
 
-      // Show receipt and modal after successful order creation
       setReceiptData(response.data);
       setShowModal(true);
     } catch (error) {
@@ -118,7 +93,7 @@ export default function AddOrderClient({ initialData }) {
         contact: "",
         address: "",
         service: "",
-        items: [{ product: "", quantity: 1, unitPrice: 0, amount: 0 }],
+        items: [],
         charges: { deliveryCharge: 0, discount: 0 },
         outsourcingCompanyName: "",
         outsourcingCost: 0,
@@ -146,224 +121,216 @@ export default function AddOrderClient({ initialData }) {
   const deliveryCharge = parseFloat(order.charges.deliveryCharge) || 0;
   const discountPercentage = parseFloat(order.charges.discount) || 0;
   const discountAmount = (subtotal * discountPercentage) / 100;
-  const totalAmount = (subtotal + deliveryCharge - discountAmount).toFixed(2);
+  const totalAmount = (subtotal - discountAmount + deliveryCharge).toFixed(2);
 
   return (
-   <>
-  <div className="flex justify-left">
-    <div className="container p-6 mr-4 bg-white rounded-lg shadow-lg max-w-4xl">
-      <h2 className="text-2xl font-semibold mb-6 text-blue-800">New Order</h2>
+    <>
+      <div className="flex justify-left">
+        <div className="container p-6 mr-4 bg-white rounded-lg shadow-lg max-w-4xl">
+          <h2 className="text-2xl font-semibold mb-6 text-blue-800">
+            New Order
+          </h2>
 
-      {/* Customer Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="block text-blue-700 font-medium mb-1">Customer Name</label>
-          <input
-            type="text"
-            value={order.customer}
-            onChange={(e) => setOrder({ ...order, customer: e.target.value })}
-            className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
-              errors.customer ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {errors.customer && <p className="text-red-500 text-xs mt-1">{errors.customer}</p>}
-        </div>
-
-        <div>
-          <label className="block text-blue-700 font-medium mb-1">Contact</label>
-          <input
-            type="text"
-            value={order.contact}
-            onChange={(e) => setOrder({ ...order, contact: e.target.value })}
-            className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
-              errors.contact ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {errors.contact && <p className="text-red-500 text-xs mt-1">{errors.contact}</p>}
-        </div>
-
-        <div>
-          <label className="block text-blue-700 font-medium mb-1">Address</label>
-          <input
-            type="text"
-            value={order.address}
-            onChange={(e) => setOrder({ ...order, address: e.target.value })}
-            className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
-              errors.address ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-        </div>
-
-        <div>
-          <label className="block text-blue-700 font-medium mb-1">Service</label>
-          <input
-            type="text"
-            value={order.service}
-            onChange={(e) => setOrder({ ...order, service: e.target.value })}
-            className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
-              errors.service ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {errors.service && <p className="text-red-500 text-xs mt-1">{errors.service}</p>}
-        </div>
-      </div>
-
-      {/* Items */}
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold mb-4 text-blue-800">Items</h3>
-        {order.items.map((item, index) => (
-          <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          {/* Customer Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="block text-blue-700 font-medium mb-1">Product</label>
+              <label className="block text-blue-700 font-medium mb-1">
+                Customer Name
+              </label>
               <input
                 type="text"
-                value={item.product}
-                onChange={(e) => handleItemChange(index, "product", e.target.value)}
+                value={order.customer}
+                onChange={(e) =>
+                  setOrder({ ...order, customer: e.target.value })
+                }
+                className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                  errors.customer ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.customer && (
+                <p className="text-red-500 text-xs mt-1">{errors.customer}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-blue-700 font-medium mb-1">
+                Contact
+              </label>
+              <input
+                type="text"
+                value={order.contact}
+                onChange={(e) =>
+                  setOrder({ ...order, contact: e.target.value })
+                }
+                className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                  errors.contact ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.contact && (
+                <p className="text-red-500 text-xs mt-1">{errors.contact}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-blue-700 font-medium mb-1">
+                Address
+              </label>
+              <input
+                type="text"
+                value={order.address}
+                onChange={(e) =>
+                  setOrder({ ...order, address: e.target.value })
+                }
+                className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                  errors.address ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-blue-700 font-medium mb-1">
+                Service
+              </label>
+              <input
+                type="text"
+                value={order.service}
+                onChange={(e) =>
+                  setOrder({ ...order, service: e.target.value })
+                }
+                className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                  errors.service ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.service && (
+                <p className="text-red-500 text-xs mt-1">{errors.service}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Items (Products Multi-select) */}
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold mb-4 text-blue-800">Items</h3>
+            <Select
+              isMulti
+              options={productOptions}
+              onChange={handleProductChange}
+              className="mb-4"
+              placeholder="Select products"
+            />
+            {errors.items && (
+              <p className="text-red-500 text-xs mt-1">{errors.items}</p>
+            )}
+          </div>
+
+          {/* Charges */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-blue-700 font-medium mb-1">
+                Delivery Charge
+              </label>
+              <input
+                type="number"
+                value={order.charges.deliveryCharge}
+                onChange={(e) =>
+                  setOrder({
+                    ...order,
+                    charges: {
+                      ...order.charges,
+                      deliveryCharge: parseFloat(e.target.value),
+                    },
+                  })
+                }
                 className="p-3 w-full border rounded-md"
               />
             </div>
 
             <div>
-              <label className="block text-blue-700 font-medium mb-1">Quantity</label>
+              <label className="block text-blue-700 font-medium mb-1">
+                Discount
+              </label>
               <input
                 type="number"
-                value={item.quantity}
-                onChange={(e) => handleItemChange(index, "quantity", parseInt(e.target.value))}
+                value={order.charges.discount}
+                onChange={(e) =>
+                  setOrder({
+                    ...order,
+                    charges: {
+                      ...order.charges,
+                      discount: parseFloat(e.target.value),
+                    },
+                  })
+                }
                 className="p-3 w-full border rounded-md"
               />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-blue-700 font-medium mb-1">Unit Price</label>
-              <input
-                type="number"
-                value={item.unitPrice}
-                onChange={(e) => handleItemChange(index, "unitPrice", parseFloat(e.target.value))}
-                className="p-3 w-full border rounded-md"
-              />
-            </div>
+          {/* Outsourcing Details */}
+          <div className="mb-6">
+            <label className="block text-blue-700 font-medium mb-1">
+              Outsourcing Company Name
+            </label>
+            <input
+              type="text"
+              value={order.outsourcingCompanyName}
+              onChange={(e) =>
+                setOrder({ ...order, outsourcingCompanyName: e.target.value })
+              }
+              className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                errors.outsourcingCompanyName
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}
+            />
 
-            <div>
-              <label className="block text-blue-700 font-medium mb-1">Amount</label>
-              <input
-                type="number"
-                value={item.amount}
-                readOnly
-                className="p-3 w-full border rounded-md bg-gray-100"
-              />
-            </div>
+            <label className="block text-blue-700 font-medium mt-4 mb-1">
+              Outsourcing Cost
+            </label>
+            <input
+              type="number"
+              value={order.outsourcingCost}
+              onChange={(e) =>
+                setOrder({
+                  ...order,
+                  outsourcingCost: parseFloat(e.target.value),
+                })
+              }
+              className="p-3 w-full border rounded-md"
+            />
+          </div>
 
+          {/* Total Amount */}
+          <div className="mb-6">
+            <label className="block text-blue-700 font-medium mb-1">
+              Total Amount
+            </label>
+            <input
+              type="text"
+              value={`$${totalAmount}`}
+              readOnly
+              className="p-3 w-full border rounded-md bg-gray-100"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-end">
             <button
-              type="button"
-              onClick={() => handleRemoveItem(index)}
-              className="text-white bg-red-500 py-3 mt-4"
+              onClick={handleSubmit}
+              className={`px-6 py-3 bg-blue-600 text-white rounded-md focus:ring-2 focus:ring-blue-500 ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={loading}
             >
-              Remove
+              {loading ? "Processing..." : "Submit Order"}
             </button>
           </div>
-        ))}
-
-        <button
-          type="button"
-          onClick={handleAddItem}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Add Item
-        </button>
-        {errors.items && <p className="text-red-500 text-xs mt-1">{errors.items}</p>}
-      </div>
-
-      {/* Charges */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="block text-blue-700 font-medium mb-1">Delivery Charge</label>
-          <input
-            type="number"
-            value={order.charges.deliveryCharge}
-            onChange={(e) => handleChargeChange("deliveryCharge", parseFloat(e.target.value))}
-            className="p-3 w-full border rounded-md"
-          />
-        </div>
-
-        <div>
-          <label className="block text-blue-700 font-medium mb-1">Discount</label>
-          <input
-            type="number"
-            value={order.charges.discount}
-            onChange={(e) => handleChargeChange("discount", parseFloat(e.target.value))}
-            className="p-3 w-full border rounded-md"
-          />
         </div>
       </div>
 
-      {/* Outsourcing Details */}
-      <div className="mb-6">
-        <label className="block text-blue-700 font-medium mb-1">Outsourcing Company Name</label>
-        <input
-          type="text"
-          value={order.outsourcingCompanyName}
-          onChange={(e) => setOrder({ ...order, outsourcingCompanyName: e.target.value })}
-          className={`p-3 w-full border rounded-md focus:ring-2 focus:ring-blue-500 ${
-            errors.outsourcingCompanyName ? "border-red-500" : "border-gray-300"
-          }`}
-        />
-        {errors.outsourcingCompanyName && (
-          <p className="text-red-500 text-xs mt-1">{errors.outsourcingCompanyName}</p>
-        )}
-
-        <label className="block text-blue-700 font-medium mt-4 mb-1">Outsourcing Cost</label>
-        <input
-          type="number"
-          value={order.outsourcingCost}
-          onChange={(e) => setOrder({ ...order, outsourcingCost: parseFloat(e.target.value) })}
-          className="p-3 w-full border rounded-md"
-        />
-      </div>
-
-      {/* Submit Button */}
-      <div className="mb-6">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={loading}
-          className={`bg-blue-500 text-white px-4 py-2 rounded ${
-            loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        >
-          {loading ? "Submitting..." : "Submit Order"}
-        </button>
-      </div>
-    </div>
-
-    {/* Summary Section */}
-    <div>
-      <div className="mb-6 bg-white p-6">
-        <h3 className="text-xl font-semibold mb-4 text-blue-800">Summary</h3>
-        <div className="grid grid-cols-2 gap-4 mb-2">
-          <div className="font-medium">Subtotal</div>
-          <div className="text-right">{subtotal.toFixed(2)}</div>
-        </div>
-        <div className="grid grid-cols-2 gap-4 mb-2">
-          <div className="font-medium">Delivery Charge</div>
-          <div className="text-right">{deliveryCharge.toFixed(2)}</div>
-        </div>
-        <div className="grid grid-cols-2 gap-4 mb-2">
-          <div className="font-medium">Discount</div>
-          <div className="text-right">-{discountAmount.toFixed(2)}</div>
-        </div>
-        <div className="grid grid-cols-2 gap-4 mb-2">
-          <div className="font-medium">Total</div>
-          <div className="text-right">{totalAmount}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {/* Modal for Receipt */}
-  {showModal && receiptData && (
-    <ReceiptClient data={receiptData} customerCount={customerCount} onClose={() => setShowModal(false)} />
-  )}
-</>
-
+      {/* Receipt Modal */}
+      {showModal && (
+        <ReceiptClient data={receiptData} customerCount={customerCount} onClose={() => setShowModal(false)} />
+      )}
+    </>
   );
 }
