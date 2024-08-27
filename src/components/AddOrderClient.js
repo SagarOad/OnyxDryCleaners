@@ -361,7 +361,7 @@ export default function AddOrderClient({ initialData }) {
 
   {/* Modal for Receipt */}
   {showModal && receiptData && (
-    <ReceiptClient data={receiptData} customerCount={customerCount} deliveryCharge={deliveryCharge} onClose={() => setShowModal(false)} />
+    <ReceiptClient data={receiptData} customerCount={customerCount} onClose={() => setShowModal(false)} />
   )}
 </>
 
