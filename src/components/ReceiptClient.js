@@ -42,10 +42,10 @@ const ReceiptClient = ({ data, totalAmount, customerCount, discount, onClose, on
           <table className="w-full text-sm">
             <thead>
               <tr>
-                <th className="text-left py-2">Product</th>
-                <th className="text-center py-2">QTY</th>
-                <th className="text-right py-2">Unit Price</th>
-                <th className="text-right py-2">Delivery Charge</th>
+                <th className="text-left text-[12px] py-2">Product</th>
+                <th className="text-center text-[12px] py-2">QTY</th>
+                <th className="text-right text-[12px] py-2">Unit Price</th>
+                <th className="text-right text-[12px] py-2">Delivery Charge</th>
               </tr>
             </thead>
             <tbody>
@@ -54,8 +54,8 @@ const ReceiptClient = ({ data, totalAmount, customerCount, discount, onClose, on
                   <tr key={index}>
                     <td className="py-2">{item.product}</td>
                     <td className="py-2 text-center">{item.quantity}</td>
-                    <td className="py-2 text-right">{item.unitPrice}</td>
-                    <td className="py-2 text-right">{item.deliveryCharge !== undefined ? item.deliveryCharge : 0}</td>
+                    <td className="py-2 text-center">{item.unitPrice}</td>
+                    <td className="py-2 text-center">{data.deliveryCharge !== undefined ? data.deliveryCharge : 0}</td>
                   </tr>
                 ))
               ) : (
@@ -77,7 +77,7 @@ const ReceiptClient = ({ data, totalAmount, customerCount, discount, onClose, on
                 <td colSpan="3" className="py-2 font-medium text-right">
                   Total Amount
                 </td>
-                <td className="py-2 text-right">{totalAmount}</td>
+                <td className="py-2 text-center">{data.subtotal}</td>
               </tr>
             </tbody>
           </table>
