@@ -284,7 +284,7 @@ export default function AddOrderClient({ initialData }) {
               {/* Items (Products Multi-select) */}
               <div className="mb-6">
                 <h3 className="text-xl font-semibold mb-4 text-blue-800">
-                  Items
+                  Add Items
                 </h3>
                 <Select
                   isMulti
@@ -407,50 +407,76 @@ export default function AddOrderClient({ initialData }) {
           </div>
         </div>
         <div className="col-span-6">
-          <div className="container p-6 bg-white rounded-lg shadow-md">
-            <h3 className="text-2xl font-semibold mb-6 text-blue-900">
-              Selected Products
-            </h3>
-            {order.items.map((item, index) => (
-              <div
-                key={index}
-                className="mb-6 p-4 border border-gray-300 rounded-lg shadow-sm"
+  <div className="container p-6 bg-white rounded-lg shadow-md">
+    <h3 className="text-2xl font-semibold mb-6 text-blue-900">
+      Selected Products
+    </h3>
+    {order.items.length === 0 ? (
+      <div className="flex flex-col items-center justify-center p-6 bg-gray-100 rounded-lg shadow-sm text-center">
+        <svg
+          className="w-16 h-16 text-gray-400 mb-4"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 6h18M3 12h18M3 18h18"
+          />
+        </svg>
+        <p className="text-gray-500 text-lg font-medium">
+          No products selected yet.
+        </p>
+        <p className="text-gray-400 mt-2">
+          Use the product selection to add items to your order.
+        </p>
+      </div>
+    ) : (
+      order.items.map((item, index) => (
+        <div
+          key={index}
+          className="mb-6 p-4 border border-gray-300 rounded-lg shadow-sm"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-md font-semibold text-gray-800">
+              {item.product}
+            </h4>
+            <div className="flex items-center space-x-4">
+              <label
+                htmlFor={`quantity-${index}`}
+                className="text-blue-700 font-medium"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-xl font-semibold text-gray-800">
-                    {item.product}
-                  </h4>
-                  <div className="flex items-center space-x-4">
-                    <label
-                      htmlFor={`quantity-${index}`}
-                      className="text-blue-700 font-medium"
-                    >
-                      Quantity:
-                    </label>
-                    <input
-                      id={`quantity-${index}`}
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) =>
-                        handleQuantityChange(index, parseInt(e.target.value))
-                      }
-                      className="p-2 w-24 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-                <p className="text-gray-700">
-                  <span className="font-semibold">Price:</span> Rs.{" "}
-                  {item.unitPrice.toFixed(2)}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-semibold">Amount:</span> Rs.{" "}
-                  {item.amount.toFixed(2)}
-                </p>
-              </div>
-            ))}
+                Quantity:
+              </label>
+              <input
+                id={`quantity-${index}`}
+                type="number"
+                min="1"
+                value={item.quantity}
+                onChange={(e) =>
+                  handleQuantityChange(index, parseInt(e.target.value))
+                }
+                className="p-2 w-24 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
+              />
+            </div>
           </div>
+          <p className="text-gray-700">
+            <span className="font-semibold">Price:</span> Rs.{" "}
+            {item.unitPrice.toFixed(2)}
+          </p>
+          <p className="text-gray-700">
+            <span className="font-semibold">Amount:</span> Rs.{" "}
+            {item.amount.toFixed(2)}
+          </p>
         </div>
+      ))
+    )}
+  </div>
+</div>
+
       </div>
       {/* Receipt Modal */}
       {showModal && (
