@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { FaListAlt, FaUsers, FaPlus, FaHome } from "react-icons/fa";
+import { FaListAlt, FaUsers, FaPlus, FaHome, FaTag } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 
 export default function Sidebar() {
@@ -10,7 +10,7 @@ export default function Sidebar() {
   const isActive = (path) => pathname === path;
 
   return (
-    <div className=" overflow-y-auto w-64 bg-gray-900 text-white shadow-lg">
+    <div className="flex-shrink-0 w-64 bg-gray-900 text-white shadow-lg">
       <div className="flex items-center justify-center mt-10">
         <h1 className="text-2xl font-bold tracking-wide">Dashboard</h1>
       </div>
@@ -56,6 +56,17 @@ export default function Sidebar() {
           >
             <FaUsers className="mr-3 text-lg" />
             Customers
+          </button>
+        </Link>
+
+        <Link href="/add-product">
+          <button
+            className={`flex items-center py-3 px-4 w-full text-left text-sm font-semibold transition-colors duration-300 rounded-md ${
+              isActive("/add-product") ? "bg-gray-700" : "hover:bg-gray-700"
+            }`}
+          >
+            <FaTag className="mr-3 text-lg" />
+            Add Product
           </button>
         </Link>
       </nav>
