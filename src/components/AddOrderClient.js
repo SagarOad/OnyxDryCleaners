@@ -5,12 +5,6 @@ import Select from "react-select";
 import axios from "axios";
 import ReceiptClient from "./ReceiptClient";
 
-const productOptions = [
-  { label: "Shirt", value: "Shirt", price: 5 },
-  { label: "Pants", value: "Pants", price: 7 },
-  { label: "Jacket", value: "Jacket", price: 15 },
-  { label: "Dress", value: "Dress", price: 12 },
-];
 
 export default function AddOrderClient({ initialData }) {
   const [order, setOrder] = useState({
