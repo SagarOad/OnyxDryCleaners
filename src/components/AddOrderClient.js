@@ -290,7 +290,7 @@ export default function AddOrderClient({ initialData }) {
                   isMulti
                   options={options}
                   onChange={handleProductChange}
-                  className="mb-4"
+                  className="mb-4 text-black"
                   placeholder="Select products"
                 />
                 {errors.items && (
