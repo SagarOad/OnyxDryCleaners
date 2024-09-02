@@ -1,6 +1,7 @@
 "use client";
 import Sidebar from "@/components/Sidebar";
 import { useState } from "react";
+import axios from "axios";
 export default function AdminProducts() {
   const [name, setName] = useState("");
   const [value, setValue] = useState("");
@@ -12,14 +13,18 @@ export default function AdminProducts() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-
+  
     try {
+      console.log("Submitting product data:", { name, value, price }); // Log the data being sent
+  
       const response = await axios.post("/api/add-product", {
         name,
         value,
         price,
       });
-
+  
+      console.log("API Response:", response.data); // Log the response
+  
       setSuccess("Product added successfully!");
       setName("");
       setValue("");
@@ -29,6 +34,7 @@ export default function AdminProducts() {
       console.error("Error:", err.response?.data || err.message);
     }
   };
+  
 
   return (
     <div className="flex h-screen">

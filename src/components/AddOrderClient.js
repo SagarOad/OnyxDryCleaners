@@ -484,6 +484,7 @@ export default function AddOrderClient({ initialData }) {
           data={receiptData}
           customerCount={customerCount}
           onClose={() => setShowModal(false)}
+          totalAmount={totalAmount}
         />
       )}
     </>

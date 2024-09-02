@@ -4,7 +4,10 @@ import React from "react";
 import Image from "next/image";
 import logo from "@/assets/onyxlogo.jpg";
 
-const ReceiptClient = ({ data, customerCount, onClose, onConfirm }) => {
+const ReceiptClient = ({ data, customerCount, onClose }) => {
+
+  const totalAmount = (data?.subtotal - data?.discount + data?.deliveryCharge);
+
 
   const summaryPrint = () => {
     // Get elements to hide and show
@@ -22,7 +25,7 @@ const ReceiptClient = ({ data, customerCount, onClose, onConfirm }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div id="receipt" className="receipt-container w-96 rounded bg-white px-6 py-8 shadow-lg">
+      <div id="receipt" className="receipt-container w-[27rem] rounded bg-white px-6 py-8 shadow-lg">
         <div className="flex flex-col items-center mb-4">
           <Image src={logo} alt="Logo" className="w-20 mb-2" />
           <h4 className="text-xl font-semibold">Onyx Dry Cleaners</h4>
@@ -32,21 +35,25 @@ const ReceiptClient = ({ data, customerCount, onClose, onConfirm }) => {
         </div>
 
         <div className="border-t border-gray-300 py-4">
-          <p className="flex justify-between text-sm">
-            <span className="font-medium">Customer Count:</span>
+          <p className="flex justify-between text-sm mb-2">
+            <span className="font-medium text-left">Customer Count:</span>
             <span>00{customerCount}</span>
           </p>
-          <p className="flex justify-between text-sm">
-            <span className="font-medium">Service Type:</span>
+          <p className="flex justify-between text-sm mb-2">
+            <span className="font-medium text-left">Service Type:</span>
             <span>{data?.service}</span>
           </p>
-          <p className="flex justify-between text-sm">
-            <span className="font-medium">Host:</span>
+          <p className="flex justify-between text-sm mb-2">
+            <span className="font-medium text-left">Host:</span>
             <span>Vijay Kumar</span>
           </p>
-          <p className="flex justify-between text-sm">
-            <span className="font-medium">Customer:</span>
+          <p className="flex justify-between text-sm mb-2">
+            <span className="font-medium text-left">Customer:</span>
             <span>{data?.customer?.name}</span>
+          </p>
+          <p className="flex justify-between text-sm mb-2">
+            <span className="font-medium text-left">Address:</span>
+            <span className=" w-[200px]">{data?.customer?.address}</span>
           </p>
         </div>
 
@@ -54,20 +61,20 @@ const ReceiptClient = ({ data, customerCount, onClose, onConfirm }) => {
           <table className="w-full text-sm">
             <thead>
               <tr>
-                <th className="text-center text-[12px] py-2">Product</th>
-                <th className="text-center text-[12px] py-2">QTY</th>
-                <th className="text-center text-[12px] py-2">Unit Price</th>
-                <th className="text-center text-[12px] py-2">Total</th>
+                <th className="text-left text-[12px] py-2">Product</th>
+                <th className="text-left text-[12px] py-2">QTY</th>
+                <th className="text-right text-[12px] py-2">Unit Price</th>
+                <th className="text-right text-[12px] py-2">Total</th>
               </tr>
             </thead>
             <tbody>
               {data?.items.length ? (
                 data.items.map((item, index) => (
                   <tr key={index}>
-                    <td className="py-2 text-center">{item.product}</td>
-                    <td className="py-2 text-center">{item.quantity}</td>
-                    <td className="py-2 text-center">{item.unitPrice}</td>
-                    <td className="py-2 text-center">{item.amount}</td>
+                    <td className="py-2 text-left">{item.product}</td>
+                    <td className="py-2 text-left">{item.quantity}</td>
+                    <td className="py-2 pl-2 text-right">{item.unitPrice}</td>
+                    <td className="py-2 pl-2 text-right">{item.amount}</td>
                   </tr>
                 ))
               ) : (
@@ -85,17 +92,29 @@ const ReceiptClient = ({ data, customerCount, onClose, onConfirm }) => {
                   <td className="py-2 text-right">-${(data?.subtotal * (data?.charges?.discount / 100)).toFixed(2)}</td>
                 </tr>
               )}
-              <tr className="border-t border-gray-300">
-                <td colSpan="3" className="py-2 font-medium text-right">
-                  Delivery Charge
+                <tr className="border-t border-gray-300">
+                <td colSpan="3" className="py-2 pr-2 font-medium text-right">
+                  Total
                 </td>
-                <td className="py-2 text-center">{data?.deliveryCharge}</td>
+                <td className="py-2 text-right">Rs. {data?.subtotal}</td>
               </tr>
               <tr className="border-t border-gray-300">
-                <td colSpan="3" className="py-2 font-medium text-right">
-                  Total Amount
+                <td colSpan="3" className="py-2 pr-2 font-medium text-right">
+                  Delivery Charge
                 </td>
-                <td className="py-2 text-center">{data?.subtotal}</td>
+                <td className="py-2 text-right">Rs. {data?.deliveryCharge}</td>
+              </tr>
+              <tr className="border-t border-gray-300">
+                <td colSpan="3" className="py-2 pr-2 font-medium text-right">
+                  Discount
+                </td>
+                <td className="py-2 text-right">{data?.discount}%</td>
+              </tr>
+              <tr className="border-t border-gray-300">
+                <td colSpan="3" className="py-2 pr-2 font-medium text-right">
+                  Sub Total
+                </td>
+                <td className="py-2 text-right">Rs. {totalAmount}</td>
               </tr>
             </tbody>
           </table>
@@ -107,12 +126,6 @@ const ReceiptClient = ({ data, customerCount, onClose, onConfirm }) => {
             onClick={onClose}
           >
             Close
-          </button>
-          <button
-            className="bg-blue-500 text-white px-4 py-2 rounded text-sm"
-            onClick={onConfirm}
-          >
-            Confirm Order
           </button>
           <button
             className="bg-green-500 text-white px-4 py-2 rounded text-sm"
