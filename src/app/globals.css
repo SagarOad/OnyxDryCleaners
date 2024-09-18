@@ -45,3 +45,83 @@ td {
   height: 80vh;
     overflow-y: scroll;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #receipt,
+  #receipt * {
+    visibility: visible;
+  }
+
+  #receipt {
+    width: 58mm; /* Reducing the width to fit typical receipt paper */
+    margin: 0 auto;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    font-size: 10px; /* Reduce font size */
+    line-height: 1.2; /* Reduce line height for compactness */
+  }
+
+  .receipt-container {
+    box-shadow: none;
+  }
+
+  /* Avoid page breaks within elements */
+  .receipt-container {
+    page-break-inside: avoid;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    padding: 2px 0; /* Reduce padding to save space */
+  }
+
+  th {
+    text-align: left;
+  }
+
+  td {
+    text-align: right;
+  }
+
+  td:first-child, th:first-child {
+    text-align: left;
+  }
+
+  .text-xs {
+    font-size: 8px; /* Smaller text for details like address, dates, etc. */
+  }
+
+  .text-sm {
+    font-size: 9px; /* Slightly larger for important text, like totals */
+  }
+
+  .text-lg {
+    font-size: 11px; /* Heading size */
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  /* Further reduce margins and paddings */
+  .mb-4, .mt-4, .mx-auto {
+    margin: 2px 0;
+  }
+
+  .py-6, .px-4 {
+    padding: 0;
+  }
+
+  .w-16 {
+    width: 40px; /* Smaller image size for logo */
+  }
+}
+

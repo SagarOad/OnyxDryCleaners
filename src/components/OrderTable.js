@@ -29,7 +29,7 @@ export default function OrderTable() {
           page,
           pageSize: ordersPerPage,
           statusFilter, // Include status filter
-          searchQuery,  // Include search query
+          searchQuery, // Include search query
         },
       });
       setOrders(response.data.orders);
@@ -40,12 +40,10 @@ export default function OrderTable() {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     fetchOrders(currentPage);
   }, [currentPage, statusFilter, searchQuery]);
-  
 
   const deleteOrder = async (orderId) => {
     setLoadingOrderId(orderId);
@@ -116,17 +114,14 @@ export default function OrderTable() {
   .filter((order) =>
     searchQuery === ""
       ? true
-      : order?.customer?.name
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        order?.service.toLowerCase().includes(searchQuery.toLowerCase())
+      : order?.customer?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order?.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order?.customer?.contact?.includes(searchQuery) // Search by contact number
   );
-
 
 
   const indexOfFirstOrder = (currentPage - 1) * ordersPerPage;
   const currentOrders = orders; // No need to slice, as orders are already paginated
-
 
   return (
     <div>
@@ -148,7 +143,7 @@ export default function OrderTable() {
         <div>
           <input
             type="text"
-            placeholder="Search by customer or service"
+            placeholder="Search by customer, service, or contact number"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="p-2 border border-gray-300 rounded"

@@ -1,136 +1,85 @@
-"use client"; // Client-side component
+"use client";
 
 import React from "react";
 import Image from "next/image";
 import logo from "@/assets/onyxlogo.jpg";
 
 const ReceiptClient = ({ data, customerCount, onClose }) => {
-
-  const totalAmount = (data?.subtotal - data?.discount + data?.deliveryCharge);
-
+  const totalAmount = data?.subtotal - data?.discount + data?.deliveryCharge;
 
   const summaryPrint = () => {
-    // Get elements to hide and show
-    const hidePrintElements = document.querySelectorAll("#receipt");
-    // Add classes to hide elements before printing
-    hidePrintElements.forEach((element) => {
-      element.classList.remove("receipt-container");
-    });
     window.print();
-    // Remove classes after printing
-    hidePrintElements.forEach((element) => {
-      element.classList.add("receipt-container");
-    });
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div id="receipt" className="receipt-container w-[24rem] rounded bg-white px-6 py-8 shadow-lg">
-        <div className="flex flex-col items-center mb-4">
-          <Image src={logo} alt="Logo" className="w-20 mb-2" />
-          <h4 className="text-xl font-semibold text-black">Onyx Dry Cleaners</h4>
-          <p className="text-[12px] text-black text-center">
+      <div id="receipt" className="receipt-container bg-white px-4 py-6 shadow-lg">
+        <div className="text-center mb-4">
+          <Image src={logo} alt="Logo" className="w-16 mx-auto mb-2" />
+          <h4 className="text-lg font-semibold">Onyx Dry Cleaners</h4>
+          <p className="text-xs">
             Abdullah Sports Tower Qasimabad, Hyderabad, Sindh
           </p>
+          <p className="text-xs">Phone: 575-1628095</p>
         </div>
 
-        <div className="border-t border-gray-300 py-4">
-          <p className="flex justify-between text-sm mb-2">
-            <span className="font-medium text-left text-black">Customer Count:</span>
-            <span className=" text-black">00{customerCount}</span>
-          </p>
-          <p className="flex justify-between text-sm mb-2">
-            <span className="font-medium text-left text-black">Service Type:</span>
-            <span className=" text-black">{data?.service}</span>
-          </p>
-          <p className="flex justify-between text-sm mb-2">
-            <span className="font-medium text-left text-black">Host:</span>
-            <span className=" text-black">Vijay Kumar</span>
-          </p>
-          <p className="flex justify-between text-sm mb-2">
-            <span className="font-medium text-left text-black">Customer:</span>
-            <span className=" text-black">{data?.customer?.name}</span>
-          </p>
-          <p className="flex justify-between text-sm mb-2">
-            <span className="font-medium text-left text-black">Address:</span>
-            <span className=" w-[200px] text-black">{data?.customer?.address}</span>
-          </p>
+        <div className="mb-4 text-sm">
+          <p>Date: {new Date().toLocaleDateString()}</p>
+          <p>Customer Count: 00{customerCount}</p>
+          <p>Service Type: {data?.service}</p>
+          <p>Host: Vijay Kumar</p>
+          <p>Customer: {data?.customer?.name}</p>
+          <p>Address: {data?.customer?.address}</p>
         </div>
 
-        <div className="mt-4 border-t border-gray-300">
-          <table className="w-full text-sm">
+        <div className="mb-4">
+          <table className="w-full text-xs">
             <thead>
               <tr>
-                <th className="text-left text-black text-[12px] py-2">Product</th>
-                <th className="text-left text-black text-[12px] py-2">QTY</th>
-                <th className="text-right text-black text-[12px] py-2">Unit Price</th>
-                <th className="text-right text-black text-[12px] py-2">Total</th>
+                <th className="text-left">Product</th>
+                <th className="text-left">QTY</th>
+                <th className="text-right">Price</th>
+                <th className="text-right">Total</th>
               </tr>
             </thead>
             <tbody>
               {data?.items.length ? (
                 data.items.map((item, index) => (
                   <tr key={index}>
-                    <td className="py-2 text-black text-left">{item.product}</td>
-                    <td className="py-2 text-black text-left">{item.quantity}</td>
-                    <td className="py-2 text-black pl-2 text-right">{item.unitPrice}</td>
-                    <td className="py-2 text-black pl-2 text-right">{item.amount}</td>
+                    <td>{item.product}</td>
+                    <td>{item.quantity}</td>
+                    <td className="text-right">{item.unitPrice}</td>
+                    <td className="text-right">{item.amount}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="py-2 text-black text-center">
+                  <td colSpan="4" className="text-center">
                     No items
                   </td>
                 </tr>
               )}
-              {data?.charges?.discount > 0 && (
-                <tr className=" text-black">
-                  <td colSpan="3" className="py-2 text-black font-medium text-right">
-                    Discount
-                  </td>
-                  <td className="py-2 text-right text-black">-${(data?.subtotal * (data?.charges?.discount / 100)).toFixed(2)}</td>
-                </tr>
-              )}
-                <tr className="border-t border-gray-300 text-black">
-                <td colSpan="3" className="py-2 pr-2 font-medium text-black text-right">
-                  Total
-                </td>
-                <td className="py-2 text-right text-black">Rs. {data?.subtotal}</td>
-              </tr>
-              <tr className="border-t border-gray-300 text-black">
-                <td colSpan="3" className="py-2 pr-2 text-black font-medium text-right">
-                  Delivery Charge
-                </td>
-                <td className="py-2 text-right text-black">Rs. {data?.deliveryCharge}</td>
-              </tr>
-              <tr className="border-t border-gray-300 text-black">
-                <td colSpan="3" className="py-2 pr-2 text-black font-medium text-right">
-                  Discount
-                </td>
-                <td className="py-2 text-right text-black">{data?.discount}</td>
-              </tr>
-              <tr className="border-t border-gray-300 text-black">
-                <td colSpan="3" className="py-2 pr-2 text-black font-medium text-right">
-                  Grand Total
-                </td>
-                <td className="py-2 text-right text-black">Rs. {totalAmount}</td>
-              </tr>
             </tbody>
           </table>
         </div>
 
-        <div className="flex justify-between mt-6 text-black">
-          <button
-            className="bg-gray-300 px-4 py-2 rounded text-sm text-black"
-            onClick={onClose}
-          >
+        <div className="text-right text-sm">
+          <p>Subtotal: Rs. {data?.subtotal}</p>
+          <p>Delivery Charge: Rs. {data?.deliveryCharge}</p>
+          <p>Discount: Rs. {data?.discount}</p>
+          <p className="font-bold">Total: Rs. {totalAmount}</p>
+        </div>
+
+        <div className="text-center text-sm mt-4">
+          <p>Thanks for supporting local business!</p>
+          <p>THANK YOU</p>
+        </div>
+
+        <div className="flex justify-between mt-6">
+          <button className="bg-gray-300 px-4 py-2 rounded text-xs" onClick={onClose}>
             Close
           </button>
-          <button
-            className="bg-green-500 text-white px-4 py-2 rounded text-sm"
-            onClick={() => summaryPrint()}
-          >
+          <button className="bg-green-500 text-white px-4 py-2 rounded text-xs" onClick={() => summaryPrint()}>
             Print Receipt
           </button>
         </div>
