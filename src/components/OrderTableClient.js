@@ -13,7 +13,7 @@ const CustomerTableClient = () => {
   const ordersPerPage = 10;
 
   useEffect(() => {
-    fetchCustomers();
+    fetchCustomers(); // This will now handle both search and pagination
   }, [currentPage, searchQuery]);
 
   const fetchCustomers = async () => {
@@ -34,7 +34,6 @@ const CustomerTableClient = () => {
       setLoading(false);
     }
   };
-
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1); // Reset to first page on search
@@ -57,16 +56,22 @@ const CustomerTableClient = () => {
             key={index + 1}
             onClick={() => setCurrentPage(index + 1)}
             className={`px-3 py-1 mx-1 ${
-              currentPage === index + 1 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"
+              currentPage === index + 1
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-800"
             } rounded-md`}
           >
             {index + 1}
           </button>
         ))}
         <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
           className={`px-3 py-1 ${
-            currentPage === totalPages ? "bg-gray-400" : "bg-blue-600 text-white"
+            currentPage === totalPages
+              ? "bg-gray-400"
+              : "bg-blue-600 text-white"
           } rounded-md`}
           disabled={currentPage === totalPages}
         >
@@ -150,14 +155,22 @@ const CustomerTableClient = () => {
           <TransitionGroup component="tbody">
             {customers.length > 0 ? (
               customers.map((customer) => (
-                <CSSTransition key={customer.id} timeout={300} classNames="fade">
+                <CSSTransition
+                  key={customer.id}
+                  timeout={300}
+                  classNames="fade"
+                >
                   <tr className="border-b">
                     <td className="py-2 px-4">{customer.name}</td>
                     <td className="py-2 px-4">{customer.service}</td>
-                    <td className="py-2 px-4">{customer.orders[0]?.status.status || "N/A"}</td>
+                    <td className="py-2 px-4">
+                      {customer.orders[0]?.status.status || "N/A"}
+                    </td>
                     <td className="py-2 px-4">
                       {customer.orders[0]?.createdAt
-                        ? new Date(customer.orders[0].createdAt).toLocaleDateString()
+                        ? new Date(
+                            customer.orders[0].createdAt
+                          ).toLocaleDateString()
                         : "N/A"}
                     </td>
                     <td className="py-2 px-4">{customer.contact}</td>

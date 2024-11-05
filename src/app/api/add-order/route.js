@@ -16,7 +16,24 @@ export async function POST(request) {
       status,
       outsourcingCompanyName,
       outsourcingCost,
+      existingCustomerId,
     } = body;
+
+    // Check if existingCustomerId is provided
+    if (existingCustomerId === undefined) {
+      return NextResponse.json(
+        { error: "existingCustomerId must be provided" },
+        { status: 400 }
+      );
+    }
+
+    // Check if the service is provided
+    if (!service) {
+      return NextResponse.json(
+        { error: "Service must not be null" },
+        { status: 400 }
+      );
+    }
 
     // Check if the status exists
     const statusRecord = await prisma.orderStatus.findUnique({
@@ -37,12 +54,14 @@ export async function POST(request) {
         contact: customerContact,
         address: customerAddress,
         service,
+        existingId: existingCustomerId, // Use existingCustomerId
       },
       create: {
         name: customerName,
         contact: customerContact,
         address: customerAddress,
         service,
+        existingId: existingCustomerId, // Use existingCustomerId
       },
     });
 
@@ -50,13 +69,13 @@ export async function POST(request) {
     const outsourcingCompany = await prisma.outsourcingCompany.upsert({
       where: { name: outsourcingCompanyName },
       update: {
-        contact: "N/A", // Assuming contact is unchanged or provided
-        address: "N/A", // Assuming address is unchanged or provided
+        contact: "N/A",
+        address: "N/A",
       },
       create: {
         name: outsourcingCompanyName,
-        contact: "N/A", // Default contact, should be provided in request
-        address: "N/A", // Default address, should be provided in request
+        contact: "N/A",
+        address: "N/A",
       },
     });
 
@@ -65,7 +84,8 @@ export async function POST(request) {
       return acc + item.quantity * item.unitPrice;
     }, 0);
 
-    const subtotal = totalItemsPrice - charges.discount + charges.deliveryCharge;
+    const subtotal =
+      totalItemsPrice - charges.discount + charges.deliveryCharge;
 
     // Calculate the profit
     const profit = subtotal - outsourcingCost;
@@ -76,13 +96,13 @@ export async function POST(request) {
         customerId: customer.id,
         service,
         statusId: statusRecord.id,
-        liveStatusId: "1", // Assuming "live" has an id of 1
+        liveStatusId: "1", // Use a valid string ID here
         deliveryCharge: charges.deliveryCharge,
         discount: charges.discount,
-        subtotal: subtotal, // Add the calculated subtotal
-        outsourcingCompanyId: outsourcingCompany.id, // Add the outsourcing company
-        outsourcingCost: outsourcingCost, // Add the outsourcing cost
-        profit: profit, // Add the calculated profit
+        subtotal: subtotal,
+        outsourcingCompanyId: outsourcingCompany.id,
+        outsourcingCost: outsourcingCost,
+        profit: profit,
         items: {
           create: items.map((item) => ({
             product: item.product,
@@ -103,7 +123,18 @@ export async function POST(request) {
 
     return NextResponse.json(order);
   } catch (error) {
-    console.error("Error creating order:", error);
+    console.error("Error creating order:", error); // Log the full error object
+
+    // Check OrderStatus and OrderLiveStatus when an error occurs
+    try {
+      const allOrderStatuses = await prisma.orderStatus.findMany();
+      const allLiveStatuses = await prisma.orderLiveStatus.findMany();
+      console.log("Order Statuses:", allOrderStatuses);
+      console.log("Live Statuses:", allLiveStatuses);
+    } catch (dbError) {
+      console.error("Error fetching statuses:", dbError);
+    }
+
     return NextResponse.json(
       { error: "Failed to create order", details: error.message },
       { status: 500 }

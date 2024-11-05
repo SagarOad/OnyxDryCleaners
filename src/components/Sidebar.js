@@ -59,6 +59,16 @@ export default function Sidebar() {
           </button>
         </Link>
 
+        <Link href="/add-existing-customer">
+          <button
+            className={`flex items-center py-3 px-4 w-full text-left text-sm font-semibold transition-colors duration-300 rounded-md ${
+              isActive("/add-product") ? "bg-gray-700" : "hover:bg-gray-700"
+            }`}
+          >
+            <FaTag className="mr-3 text-lg" />
+            Add Customer
+          </button>
+        </Link>
         <Link href="/add-product">
           <button
             className={`flex items-center py-3 px-4 w-full text-left text-sm font-semibold transition-colors duration-300 rounded-md ${
