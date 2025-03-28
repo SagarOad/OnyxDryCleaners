@@ -134,30 +134,12 @@ export default function AddOrderClient({ initialData }) {
   // Handle form submission
   const handleSubmit = async () => {
     console.log("Button clicked. Current loading state:", loading);
-
+  
     if (!validateForm()) return;
     setLoading(true);
     try {
       console.log("Submitting order with service:", order.service);
-
-      // Log the complete order object being sent
-      console.log("Order data:", {
-        customerName: order.customer,
-        customerContact: order.contact,
-        customerEmail: order.email,
-        customerAddress: order.address,
-        service: order.service,
-        items: order.items,
-        charges: {
-          deliveryCharge: parseFloat(order.charges.deliveryCharge) || 0,
-          discount: parseFloat(order.charges.discount) || 0,
-        },
-        status: "received",
-        outsourcingCompanyName: order.outsourcingCompanyName,
-        outsourcingCost: parseFloat(order.outsourcingCost) || 0,
-        existingCustomerId: order.existingCustomerId || null,
-      });
-
+  
       const response = await axios.post("/api/add-order", {
         customerName: order.customer,
         customerContact: order.contact,
@@ -174,15 +156,35 @@ export default function AddOrderClient({ initialData }) {
         outsourcingCost: parseFloat(order.outsourcingCost) || 0,
         existingCustomerId: order.existingCustomerId || null,
       });
-
+  
+      // Show the receipt
       setReceiptData(response.data);
       setShowModal(true);
+  
+      // **Reset the form fields**
+      setOrder({
+        customer: "",
+        contact: "",
+        email: "",
+        address: "",
+        service: "",
+        items: [],
+        charges: {
+          deliveryCharge: 0,
+          discount: 0,
+        },
+        outsourcingCompanyName: "",
+        outsourcingCost: 0,
+        existingCustomerId: null,
+      });
+  
     } catch (error) {
       console.error("Error creating order:", error);
     } finally {
       setLoading(false);
     }
   };
+  
 
   // Function to fetch customer count
   const fetchCustomerCount = async () => {
