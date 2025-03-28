@@ -17,6 +17,7 @@ export async function GET(request) {
     const orders = await prisma.order.findMany({
       skip,
       take: pageSize,
+      orderBy: { createdAt: "desc" }, // Ensures the latest orders appear first
       include: {
         customer: true,
         items: true,

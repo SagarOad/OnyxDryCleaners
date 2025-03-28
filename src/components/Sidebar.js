@@ -6,80 +6,55 @@ import { usePathname } from "next/navigation";
 export default function Sidebar() {
   const pathname = usePathname(); // Get current path
 
-  // Define a helper function to check active state
   const isActive = (path) => pathname === path;
 
+  const navLinks = [
+    { href: "/", label: "Dashboard", icon: <FaHome /> },
+    { href: "/add-order", label: "Add Order", icon: <FaPlus /> },
+    { href: "/orders", label: "Orders", icon: <FaListAlt /> },
+    { href: "/customers", label: "Customers", icon: <FaUsers /> },
+    { href: "/add-existing-customer", label: "Add Customer", icon: <FaTag /> },
+    { href: "/add-product", label: "Add Product", icon: <FaTag /> },
+  ];
+
   return (
-    <div className="flex-shrink-0 w-64 bg-gray-900 text-white shadow-lg">
-      <div className="flex items-center justify-center mt-10">
-        <h1 className="text-2xl font-bold tracking-wide">Dashboard</h1>
+    <>
+      {/* Sidebar for large screens */}
+      <div className="hidden md:flex flex-col w-64 bg-gray-900 text-white shadow-lg h-screen">
+        <div className="flex items-center justify-center mt-10">
+          <h1 className="text-2xl font-bold tracking-wide">Onyx</h1>
+        </div>
+        <nav className="mt-10">
+          {navLinks.map((link) => (
+            <Link key={link.href} href={link.href}>
+              <button
+                className={`flex items-center py-3 px-4 w-full text-left text-sm font-semibold transition-colors duration-300 rounded-md ${
+                  isActive(link.href) ? "bg-gray-700" : "hover:bg-gray-700"
+                }`}
+              >
+                <span className="mr-3 text-lg">{link.icon}</span>
+                {link.label}
+              </button>
+            </Link>
+          ))}
+        </nav>
       </div>
-      <nav className="mt-10">
-        <Link href="/">
-          <button
-            className={`flex items-center py-3 px-4 w-full text-left text-sm font-semibold transition-colors duration-300 rounded-md ${
-              isActive("/") ? "bg-gray-700" : "hover:bg-gray-700"
-            }`}
-          >
-            <FaHome className="mr-3 text-lg" />
-            Dashboard
-          </button>
-        </Link>
 
-        <Link href="/add-order">
-          <button
-            className={`flex items-center py-3 px-4 w-full text-left text-sm font-semibold transition-colors duration-300 rounded-md ${
-              isActive("/add-order") ? "bg-gray-700" : "hover:bg-gray-700"
-            }`}
-          >
-            <FaPlus className="mr-3 text-lg" />
-            Add Order
-          </button>
-        </Link>
-
-        <Link href="/orders">
-          <button
-            className={`flex items-center py-3 px-4 w-full text-left text-sm font-semibold transition-colors duration-300 rounded-md ${
-              isActive("/orders") ? "bg-gray-700" : "hover:bg-gray-700"
-            }`}
-          >
-            <FaListAlt className="mr-3 text-lg" />
-            Orders
-          </button>
-        </Link>
-
-        <Link href="/customers">
-          <button
-            className={`flex items-center py-3 px-4 w-full text-left text-sm font-semibold transition-colors duration-300 rounded-md ${
-              isActive("/customers") ? "bg-gray-700" : "hover:bg-gray-700"
-            }`}
-          >
-            <FaUsers className="mr-3 text-lg" />
-            Customers
-          </button>
-        </Link>
-
-        <Link href="/add-existing-customer">
-          <button
-            className={`flex items-center py-3 px-4 w-full text-left text-sm font-semibold transition-colors duration-300 rounded-md ${
-              isActive("/add-product") ? "bg-gray-700" : "hover:bg-gray-700"
-            }`}
-          >
-            <FaTag className="mr-3 text-lg" />
-            Add Customer
-          </button>
-        </Link>
-        <Link href="/add-product">
-          <button
-            className={`flex items-center py-3 px-4 w-full text-left text-sm font-semibold transition-colors duration-300 rounded-md ${
-              isActive("/add-product") ? "bg-gray-700" : "hover:bg-gray-700"
-            }`}
-          >
-            <FaTag className="mr-3 text-lg" />
-            Add Product
-          </button>
-        </Link>
-      </nav>
-    </div>
+      {/* Bottom Navigation for small screens */}
+      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-gray-900 text-white flex justify-around py-2 shadow-lg">
+        {navLinks.map((link) => (
+          <Link key={link.href} href={link.href}>
+            <button
+              className={`flex flex-col items-center px-2 ${
+                isActive(link.href) ? "text-blue-400" : "hover:text-gray-400"
+              }`}
+            >
+              <span className="text-base">{link.icon}</span> {/* Smaller icon */}
+              <span className="text-xs">{link.label}</span> {/* Smaller text */}
+            </button>
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }

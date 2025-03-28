@@ -121,7 +121,6 @@ export default function OrderTable() {
 
 
   const indexOfFirstOrder = (currentPage - 1) * ordersPerPage;
-  const currentOrders = orders; // No need to slice, as orders are already paginated
 
   return (
     <div>

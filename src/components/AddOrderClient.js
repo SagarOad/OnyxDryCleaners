@@ -184,26 +184,24 @@ export default function AddOrderClient({ initialData }) {
     }
   };
 
-
- // Function to fetch customer count
- const fetchCustomerCount = async () => {
-  try {
-    const response = await fetch("/api/customer-count"); // Adjust the API route as needed
-    if (!response.ok) {
-      throw new Error("Failed to fetch customer count");
+  // Function to fetch customer count
+  const fetchCustomerCount = async () => {
+    try {
+      const response = await fetch("/api/customer-count"); // Adjust the API route as needed
+      if (!response.ok) {
+        throw new Error("Failed to fetch customer count");
+      }
+      const data = await response.json();
+      setCustomerCount(data.count);
+    } catch (error) {
+      console.error("Error fetching customer count:", error);
     }
-    const data = await response.json();
-    setCustomerCount(data.count);
-  } catch (error) {
-    console.error("Error fetching customer count:", error);
-  }
-};
+  };
 
-// Fetch customer count when the component mounts
-useEffect(() => {
-  fetchCustomerCount();
-}, []);
-
+  // Fetch customer count when the component mounts
+  useEffect(() => {
+    fetchCustomerCount();
+  }, []);
 
   // Calculate totals
   const subtotal = order.items.reduce((acc, item) => acc + item.amount, 0);
@@ -215,7 +213,7 @@ useEffect(() => {
   return (
     <>
       <div className=" grid grid-cols-12">
-        <div className="col-span-6">
+        <div className="col-span-12 md:col-span-6">
           <div className="flex justify-left">
             <div className="container p-6 mr-4 bg-white rounded-lg shadow-lg max-w-4xl">
               <h2 className="text-2xl font-semibold mb-6 text-blue-800">
@@ -478,15 +476,16 @@ useEffect(() => {
             </div>
           </div>
         </div>
-        <div className="col-span-6">
-          <div className="container p-6 bg-white rounded-lg shadow-md">
-            <h3 className="text-2xl font-semibold mb-6 text-blue-900">
+        <div className="col-span-12 md:col-span-6">
+          <div className="container p-4 md:p-6 bg-white rounded-lg shadow-md">
+            <h3 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6 text-blue-900">
               Selected Products
             </h3>
+
             {order.items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-6 bg-gray-100 rounded-lg shadow-sm text-center">
+              <div className="flex flex-col items-center justify-center p-4 md:p-6 bg-gray-100 rounded-lg shadow-sm text-center">
                 <svg
-                  className="w-16 h-16 text-gray-400 mb-4"
+                  className="w-12 h-12 md:w-16 md:h-16 text-gray-400 mb-3 md:mb-4"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -499,10 +498,10 @@ useEffect(() => {
                     d="M3 6h18M3 12h18M3 18h18"
                   />
                 </svg>
-                <p className="text-gray-500 text-lg font-medium">
+                <p className="text-gray-500 text-base md:text-lg font-medium">
                   No products selected yet.
                 </p>
-                <p className="text-gray-400 mt-2">
+                <p className="text-gray-400 text-sm md:text-base mt-1 md:mt-2">
                   Use the product selection to add items to your order.
                 </p>
               </div>
@@ -510,16 +509,16 @@ useEffect(() => {
               order.items.map((item, index) => (
                 <div
                   key={index}
-                  className="mb-6 p-4 border border-gray-300 rounded-lg shadow-sm"
+                  className="mb-4 md:mb-6 p-3 md:p-4 border border-gray-300 rounded-lg shadow-sm"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-md font-semibold text-gray-800">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-3 md:mb-4">
+                    <h4 className="text-md md:text-lg font-semibold text-gray-800">
                       {item.product}
                     </h4>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 md:space-x-4 mt-2 md:mt-0">
                       <label
                         htmlFor={`quantity-${index}`}
-                        className="text-blue-700 font-medium"
+                        className="text-blue-700 text-sm md:text-base font-medium"
                       >
                         Quantity:
                       </label>
@@ -531,15 +530,15 @@ useEffect(() => {
                         onChange={(e) =>
                           handleQuantityChange(index, parseInt(e.target.value))
                         }
-                        className="p-2 w-24 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
+                        className="p-1 md:p-2 w-16 md:w-24 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                   </div>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 text-sm md:text-base">
                     <span className="font-semibold">Price:</span> Rs.{" "}
                     {item.unitPrice.toFixed(2)}
                   </p>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 text-sm md:text-base">
                     <span className="font-semibold">Amount:</span> Rs.{" "}
                     {item.amount.toFixed(2)}
                   </p>
