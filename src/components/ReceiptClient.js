@@ -6,7 +6,7 @@ import logo from "@/assets/onyxlogo.jpg";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-const ReceiptClient = ({ data, customerCount, onClose }) => {
+const ReceiptClient = ({ data, orderCount, onClose }) => {
   const totalAmount = data?.subtotal - data?.discount + data?.deliveryCharge;
 
   const generatePDF = async () => {
@@ -60,7 +60,7 @@ const ReceiptClient = ({ data, customerCount, onClose }) => {
 
         <div className="mb-4 text-sm">
           <p>Date: {new Date().toLocaleDateString()}</p>
-          <p>Customer Count: 00{customerCount}</p>
+          <p>Order Number: 00{orderCount}</p>
           <p>Service Type: {data?.service}</p>
           <p>Host: Vijay Kumar</p>
           <p>Customer: {data?.customer?.name}</p>

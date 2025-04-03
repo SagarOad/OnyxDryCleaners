@@ -24,7 +24,7 @@ export default function AddOrderClient({ initialData }) {
 
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [customerCount, setCustomerCount] = useState(0);
+  const [orderCount, setOrderCount] = useState(0);
   const [receiptData, setReceiptData] = useState(null);
   const [errors, setErrors] = useState({});
   const [options, setOptions] = useState([]);
@@ -137,6 +137,7 @@ export default function AddOrderClient({ initialData }) {
   
     if (!validateForm()) return;
     setLoading(true);
+  
     try {
       console.log("Submitting order with service:", order.service);
   
@@ -160,6 +161,9 @@ export default function AddOrderClient({ initialData }) {
       // Show the receipt
       setReceiptData(response.data);
       setShowModal(true);
+  
+      // **Fetch updated order count**
+      fetchOrderCount(); // 👈 Update order count immediately after creating an order
   
       // **Reset the form fields**
       setOrder({
@@ -186,23 +190,23 @@ export default function AddOrderClient({ initialData }) {
   };
   
 
-  // Function to fetch customer count
-  const fetchCustomerCount = async () => {
+  // Function to fetch order count
+  const fetchOrderCount = async () => {
     try {
-      const response = await fetch("/api/customer-count"); // Adjust the API route as needed
+      const response = await fetch("/api/order-count"); // Adjust the API route as needed
       if (!response.ok) {
-        throw new Error("Failed to fetch customer count");
+        throw new Error("Failed to fetch order count");
       }
       const data = await response.json();
-      setCustomerCount(data.count);
+      setOrderCount(data.count);
     } catch (error) {
-      console.error("Error fetching customer count:", error);
+      console.error("Error fetching order count:", error);
     }
   };
 
   // Fetch customer count when the component mounts
   useEffect(() => {
-    fetchCustomerCount();
+    fetchOrderCount();
   }, []);
 
   // Calculate totals
@@ -554,7 +558,7 @@ export default function AddOrderClient({ initialData }) {
       {showModal && (
         <ReceiptClient
           data={receiptData}
-          customerCount={customerCount}
+          orderCount={orderCount}
           onClose={() => setShowModal(false)}
           totalAmount={totalAmount}
         />
