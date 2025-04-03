@@ -24,16 +24,9 @@ export default function AddOrderClient({ initialData }) {
 
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [startOrderNumber, setStartOrderNumber] = useState(() => {
-    return Number(localStorage.getItem("startOrderNumber")) || 0;
-  });
-
-  const [orderCount, setOrderCount] = useState(() => {
-    return Number(localStorage.getItem("orderCount")) || 2451;
-  });
-
+  const [orderCount, setOrderCount] = useState(1020);
   const [isEditing, setIsEditing] = useState(false);
-  const [newStartNumber, setNewStartNumber] = useState(startOrderNumber);
+  const [hasMounted, setHasMounted] = useState(false); // Track mount state
   const [receiptData, setReceiptData] = useState(null);
   const [errors, setErrors] = useState({});
   const [options, setOptions] = useState([]);
@@ -140,15 +133,25 @@ export default function AddOrderClient({ initialData }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Update localStorage whenever orderCount changes
-  useEffect(() => {
-    localStorage.setItem("orderCount", orderCount);
-  }, [orderCount]);
+ // Wait until the component has mounted before accessing localStorage
+ useEffect(() => {
+  setHasMounted(true);
+  const savedOrderCount = Number(localStorage.getItem("orderCount")) || 1020;
+  setOrderCount(savedOrderCount);
+}, []);
 
-  // Update localStorage when user changes the starting number
-  useEffect(() => {
-    localStorage.setItem("startOrderNumber", startOrderNumber);
-  }, [startOrderNumber]);
+// Update localStorage whenever orderCount changes (after mount)
+useEffect(() => {
+  if (hasMounted) {
+    localStorage.setItem("orderCount", orderCount);
+  }
+}, [orderCount, hasMounted]);
+
+const handleSaveNewOrderCount = (newCount) => {
+  setOrderCount(newCount);
+  localStorage.setItem("orderCount", newCount);
+  setIsEditing(false);
+};
 
   const handleSubmit = async () => {
     console.log("Button clicked. Current loading state:", loading);
@@ -205,6 +208,11 @@ export default function AddOrderClient({ initialData }) {
       setLoading(false);
     }
   };
+
+    // Avoid mismatched SSR vs. Client content
+    if (!hasMounted) {
+      return null; // Prevent rendering until localStorage is available
+    }
 
   // Calculate totals
   const subtotal = order.items.reduce((acc, item) => acc + item.amount, 0);
@@ -470,8 +478,10 @@ export default function AddOrderClient({ initialData }) {
                   <input
                     type="number"
                     className="border rounded px-2 py-1 text-sm w-20"
-                    value={newStartNumber}
-                    onChange={(e) => setNewStartNumber(Number(e.target.value))}
+                    defaultValue={orderCount}
+                    onBlur={(e) =>
+                      handleSaveNewOrderCount(Number(e.target.value))
+                    }
                   />
                 ) : (
                   <span className="text-gray-700 text-sm">
@@ -479,34 +489,18 @@ export default function AddOrderClient({ initialData }) {
                   </span>
                 )}
 
-                {isEditing ? (
-                  <button
-                    onClick={() => {
-                      setStartOrderNumber(newStartNumber);
-                      setOrderCount(newStartNumber); // Reset order count
-                      setIsEditing(false);
-                    }}
-                    className="bg-green-500 text-white px-2 py-1 rounded text-xs"
-                  >
-                    Save
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="bg-gray-300 px-2 py-1 rounded text-xs"
-                  >
-                    Edit
-                  </button>
-                )}
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="bg-gray-300 px-2 py-1 rounded text-xs"
+                >
+                  {isEditing ? "Save" : "Edit"}
+                </button>
 
                 <button
                   onClick={handleSubmit}
-                  className={`px-6 py-3 bg-blue-600 text-white rounded-md focus:ring-2 focus:ring-blue-500 ${
-                    loading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                  disabled={loading}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-md"
                 >
-                  {loading ? "Processing..." : "Submit Order"}
+                  Submit Order
                 </button>
               </div>
             </div>
