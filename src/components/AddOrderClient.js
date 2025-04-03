@@ -133,25 +133,25 @@ export default function AddOrderClient({ initialData }) {
     return Object.keys(newErrors).length === 0;
   };
 
- // Wait until the component has mounted before accessing localStorage
- useEffect(() => {
-  setHasMounted(true);
-  const savedOrderCount = Number(localStorage.getItem("orderCount")) || 1020;
-  setOrderCount(savedOrderCount);
-}, []);
+  // Wait until the component has mounted before accessing localStorage
+  useEffect(() => {
+    setHasMounted(true);
+    const savedOrderCount = Number(localStorage.getItem("orderCount")) || 1020;
+    setOrderCount(savedOrderCount);
+  }, []);
 
-// Update localStorage whenever orderCount changes (after mount)
-useEffect(() => {
-  if (hasMounted) {
-    localStorage.setItem("orderCount", orderCount);
-  }
-}, [orderCount, hasMounted]);
+  // Update localStorage whenever orderCount changes (after mount)
+  useEffect(() => {
+    if (hasMounted) {
+      localStorage.setItem("orderCount", orderCount);
+    }
+  }, [orderCount, hasMounted]);
 
-const handleSaveNewOrderCount = (newCount) => {
-  setOrderCount(newCount);
-  localStorage.setItem("orderCount", newCount);
-  setIsEditing(false);
-};
+  const handleSaveNewOrderCount = (newCount) => {
+    setOrderCount(newCount);
+    localStorage.setItem("orderCount", newCount);
+    setIsEditing(false);
+  };
 
   const handleSubmit = async () => {
     console.log("Button clicked. Current loading state:", loading);
@@ -209,10 +209,10 @@ const handleSaveNewOrderCount = (newCount) => {
     }
   };
 
-    // Avoid mismatched SSR vs. Client content
-    if (!hasMounted) {
-      return null; // Prevent rendering until localStorage is available
-    }
+  // Avoid mismatched SSR vs. Client content
+  if (!hasMounted) {
+    return null; // Prevent rendering until localStorage is available
+  }
 
   // Calculate totals
   const subtotal = order.items.reduce((acc, item) => acc + item.amount, 0);

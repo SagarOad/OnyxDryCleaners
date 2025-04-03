@@ -55,7 +55,7 @@ const ReceiptClient = ({ data, orderCount, onClose }) => {
           <p className="text-xs">
             Abdullah Sports Tower Qasimabad, Hyderabad, Sindh
           </p>
-          <p className="text-xs">Phone: 575-1628095</p>
+          <p className="text-xs">Phone: 03212952737</p>
         </div>
 
         <div className="mb-4 text-sm">
