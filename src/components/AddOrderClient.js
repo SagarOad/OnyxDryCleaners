@@ -24,7 +24,16 @@ export default function AddOrderClient({ initialData }) {
 
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [orderCount, setOrderCount] = useState(0);
+  const [startOrderNumber, setStartOrderNumber] = useState(() => {
+    return Number(localStorage.getItem("startOrderNumber")) || 0;
+  });
+
+  const [orderCount, setOrderCount] = useState(() => {
+    return Number(localStorage.getItem("orderCount")) || 2451;
+  });
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [newStartNumber, setNewStartNumber] = useState(startOrderNumber);
   const [receiptData, setReceiptData] = useState(null);
   const [errors, setErrors] = useState({});
   const [options, setOptions] = useState([]);
@@ -131,16 +140,25 @@ export default function AddOrderClient({ initialData }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission
+  // Update localStorage whenever orderCount changes
+  useEffect(() => {
+    localStorage.setItem("orderCount", orderCount);
+  }, [orderCount]);
+
+  // Update localStorage when user changes the starting number
+  useEffect(() => {
+    localStorage.setItem("startOrderNumber", startOrderNumber);
+  }, [startOrderNumber]);
+
   const handleSubmit = async () => {
     console.log("Button clicked. Current loading state:", loading);
-  
+
     if (!validateForm()) return;
     setLoading(true);
-  
+
     try {
       console.log("Submitting order with service:", order.service);
-  
+
       const response = await axios.post("/api/add-order", {
         customerName: order.customer,
         customerContact: order.contact,
@@ -157,14 +175,14 @@ export default function AddOrderClient({ initialData }) {
         outsourcingCost: parseFloat(order.outsourcingCost) || 0,
         existingCustomerId: order.existingCustomerId || null,
       });
-  
+
       // Show the receipt
       setReceiptData(response.data);
       setShowModal(true);
-  
-      // **Fetch updated order count**
-      fetchOrderCount(); // 👈 Update order count immediately after creating an order
-  
+
+      // **Increment the order count**
+      setOrderCount((prevCount) => prevCount + 1);
+
       // **Reset the form fields**
       setOrder({
         customer: "",
@@ -181,33 +199,12 @@ export default function AddOrderClient({ initialData }) {
         outsourcingCost: 0,
         existingCustomerId: null,
       });
-  
     } catch (error) {
       console.error("Error creating order:", error);
     } finally {
       setLoading(false);
     }
   };
-  
-
-  // Function to fetch order count
-  const fetchOrderCount = async () => {
-    try {
-      const response = await fetch("/api/order-count"); // Adjust the API route as needed
-      if (!response.ok) {
-        throw new Error("Failed to fetch order count");
-      }
-      const data = await response.json();
-      setOrderCount(data.count);
-    } catch (error) {
-      console.error("Error fetching order count:", error);
-    }
-  };
-
-  // Fetch customer count when the component mounts
-  useEffect(() => {
-    fetchOrderCount();
-  }, []);
 
   // Calculate totals
   const subtotal = order.items.reduce((acc, item) => acc + item.amount, 0);
@@ -468,7 +465,40 @@ export default function AddOrderClient({ initialData }) {
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end">
+              <div className="flex justify-end items-center space-x-4">
+                {isEditing ? (
+                  <input
+                    type="number"
+                    className="border rounded px-2 py-1 text-sm w-20"
+                    value={newStartNumber}
+                    onChange={(e) => setNewStartNumber(Number(e.target.value))}
+                  />
+                ) : (
+                  <span className="text-gray-700 text-sm">
+                    Receipt Number: <strong>00{orderCount}</strong>
+                  </span>
+                )}
+
+                {isEditing ? (
+                  <button
+                    onClick={() => {
+                      setStartOrderNumber(newStartNumber);
+                      setOrderCount(newStartNumber); // Reset order count
+                      setIsEditing(false);
+                    }}
+                    className="bg-green-500 text-white px-2 py-1 rounded text-xs"
+                  >
+                    Save
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="bg-gray-300 px-2 py-1 rounded text-xs"
+                  >
+                    Edit
+                  </button>
+                )}
+
                 <button
                   onClick={handleSubmit}
                   className={`px-6 py-3 bg-blue-600 text-white rounded-md focus:ring-2 focus:ring-blue-500 ${
@@ -558,7 +588,7 @@ export default function AddOrderClient({ initialData }) {
       {showModal && (
         <ReceiptClient
           data={receiptData}
-          orderCount={orderCount}
+          orderCount={orderCount} // Now it starts from 1020 and increments
           onClose={() => setShowModal(false)}
           totalAmount={totalAmount}
         />
