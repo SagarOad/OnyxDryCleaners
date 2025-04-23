@@ -4,73 +4,74 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  url      = env("POSTGRES_PRISMA_URL")
 }
 
 model User {
-  id        String    @default(cuid()) @id
+  id        String   @id @default(cuid())
   name      String?
-  email     String?   @unique
-  createdAt DateTime  @default(now()) @map(name: "created_at")
-  updatedAt DateTime  @updatedAt @map(name: "updated_at")
+  email     String?  @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
   posts     Post[]
-  @@map(name: "users")
+
+  @@map("users")
 }
 
 model Post {
-  id        String     @default(cuid()) @id
+  id        String  @id @default(cuid())
   title     String
   content   String?
-  published Boolean    @default(false)
-  author    User?      @relation(fields: [authorId], references: [id])
+  published Boolean @default(false)
   authorId  String?
+  author    User?   @relation(fields: [authorId], references: [id])
 }
 
 model Customer {
-  id        String    @default(cuid()) @id
-  name      String    @unique
-  contact   String
-  address   String
-  service   String
+  id         String  @id @default(cuid())
+  name       String  @unique
+  contact    String
+  address    String
+  service    String
   existingId Int?
-  orders    Order[]
+  orders     Order[]
 }
 
 model OrderLiveStatus {
-  id      String  @default(cuid()) @id
-  status  String  @unique
-  orders  Order[]
+  id     String  @id @default(cuid())
+  status String  @unique
+  orders Order[]
 }
 
 model Order {
-  id                 String              @default(cuid()) @id
-  customer           Customer            @relation(fields: [customerId], references: [id])
-  customerId         String
-  service            String
-  statusId           String
-  status             OrderStatus         @relation(fields: [statusId], references: [id])
-  liveStatusId       String?
-  liveStatus         OrderLiveStatus?    @relation(fields: [liveStatusId], references: [id])
-  items              OrderItem[]
-  deliveryCharge     Float
-  discount           Float
-  subtotal           Float?              // Field for subtotal
-  outsourcingCompany OutsourcingCompany? @relation(fields: [outsourcingCompanyId], references: [id])
-  outsourcingCompanyId String?           // Foreign key for outsourcing company
-  outsourcingCost    Float?              // Field for outsourcing cost
-  profit             Float?              // Field for profit
-  createdAt          DateTime            @default(now()) @map(name: "created_at")
-  updatedAt          DateTime            @updatedAt @map(name: "updated_at")
+  id                   String              @id @default(cuid())
+  customerId           String
+  service              String
+  deliveryCharge       Float
+  discount             Float
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  statusId             String
+  liveStatusId         String?
+  subtotal             Float?
+  outsourcingCompanyId String?
+  outsourcingCost      Float?
+  profit               Float?
+  customer             Customer            @relation(fields: [customerId], references: [id])
+  liveStatus           OrderLiveStatus?    @relation(fields: [liveStatusId], references: [id])
+  outsourcingCompany   OutsourcingCompany? @relation(fields: [outsourcingCompanyId], references: [id])
+  status               OrderStatus         @relation(fields: [statusId], references: [id])
+  items                OrderItem[]
 }
 
 model OrderItem {
-  id        String  @default(cuid()) @id
-  order     Order   @relation(fields: [orderId], references: [id])
+  id        String @id @default(cuid())
   orderId   String
   product   String
   quantity  Int
   unitPrice Float
   amount    Float
+  order     Order  @relation(fields: [orderId], references: [id])
 }
 
 model Product {
@@ -80,27 +81,27 @@ model Product {
   price       Float
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  urgentPrice Float    @default(0)
 }
 
 model ExistingCustomers {
-  id        Int     @id @default(autoincrement())
-  name      String    @unique
-  contact   String
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
   address   String
-  service   String
+  contact   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  service   String
 }
 
-
 model OrderStatus {
-  id        String  @default(cuid()) @id
-  status    String  @unique
-  orders    Order[]
+  id     String  @id @default(cuid())
+  status String  @unique
+  orders Order[]
 }
 
 model OutsourcingCompany {
-  id      String  @default(cuid()) @id
+  id      String  @id @default(cuid())
   name    String  @unique
   contact String
   address String
@@ -108,10 +109,10 @@ model OutsourcingCompany {
 }
 
 model Admin {
-  id        String    @default(cuid()) @id
-  email     String    @unique
-  password  String    // Hashed password
-  role      String    @default("admin")
-  createdAt DateTime  @default(now()) @map(name: "created_at")
-  updatedAt DateTime  @updatedAt @map(name: "updated_at")
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      String   @default("admin")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 }

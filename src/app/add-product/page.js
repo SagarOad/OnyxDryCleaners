@@ -8,23 +8,25 @@ export default function AdminProducts() {
   const [price, setPrice] = useState("");
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [urgentPrice, setUrgentPrice] = useState("")
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-  
+
     try {
       console.log("Submitting product data:", { name, value, price }); // Log the data being sent
-  
+
       const response = await axios.post("/api/add-product", {
         name,
         value,
         price,
+        urgentPrice,
       });
-  
+
       console.log("API Response:", response.data); // Log the response
-  
+
       setSuccess("Product added successfully!");
       setName("");
       setValue("");
@@ -34,7 +36,6 @@ export default function AdminProducts() {
       console.error("Error:", err.response?.data || err.message);
     }
   };
-  
 
   return (
     <div className="flex h-screen">
@@ -83,7 +84,18 @@ export default function AdminProducts() {
               required
             />
           </div>
-
+          <div className="mb-4">
+            <label className="block text-blue-700 font-medium mb-1">
+              Urgent Price
+            </label>
+            <input
+              type="number"
+              value={urgentPrice}
+              onChange={(e) => setUrgentPrice(e.target.value)}
+              className="p-3 w-full border rounded-md"
+              required
+            />
+          </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           {success && <p className="text-green-500 text-sm">{success}</p>}
 

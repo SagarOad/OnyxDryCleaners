@@ -48,7 +48,10 @@ const ReceiptClient = ({ data, orderCount, onClose }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div id="receipt" className="receipt-container bg-white px-4 py-6 shadow-lg max-h-screen overflow-auto">
+      <div
+        id="receipt"
+        className="receipt-container bg-white px-4 py-6 shadow-lg max-h-screen overflow-auto"
+      >
         <div className="text-center mb-4">
           <Image src={logo} alt="Logo" className="w-16 mx-auto mb-2" />
           <h4 className="text-lg font-semibold">Onyx Dry Cleaners</h4>
@@ -61,7 +64,12 @@ const ReceiptClient = ({ data, orderCount, onClose }) => {
         <div className="mb-4 text-sm">
           <p>Date: {new Date().toLocaleDateString()}</p>
           <p>Order Number: 00{orderCount}</p>
-          <p>Service Type: {data?.service}</p>
+          <p>
+            Service Type: {data?.service}
+            {data?.isUrgent && (
+              <span className="ml-2 text-red-600 font-semibold">(Urgent)</span>
+            )}
+          </p>
           <p>Host: Vijay Kumar</p>
           <p>Customer: {data?.customer?.name}</p>
           <p>Address: {data?.customer?.address}</p>
@@ -83,7 +91,15 @@ const ReceiptClient = ({ data, orderCount, onClose }) => {
                   <tr key={index}>
                     <td>{item.product}</td>
                     <td>{item.quantity}</td>
-                    <td className="text-right">{item.unitPrice}</td>
+                    <td>
+                      Rs. {item.unitPrice.toFixed(2)}{" "}
+                      {item.urgent && (
+                        <span className="text-red-500 font-semibold ml-1">
+                          (Urgent)
+                        </span>
+                      )}
+                    </td>
+
                     <td className="text-right">{item.amount}</td>
                   </tr>
                 ))
@@ -110,10 +126,16 @@ const ReceiptClient = ({ data, orderCount, onClose }) => {
         </div>
 
         <div className="flex justify-between mt-6 no-print">
-          <button className="bg-gray-300 px-4 py-2 rounded text-xs" onClick={onClose}>
+          <button
+            className="bg-gray-300 px-4 py-2 rounded text-xs"
+            onClick={onClose}
+          >
             Close
           </button>
-          <button className="bg-green-500 text-white px-4 py-2 rounded text-xs" onClick={generatePDF}>
+          <button
+            className="bg-green-500 text-white px-4 py-2 rounded text-xs"
+            onClick={generatePDF}
+          >
             Print Receipt
           </button>
         </div>

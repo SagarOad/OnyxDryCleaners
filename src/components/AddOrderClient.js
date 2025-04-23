@@ -13,6 +13,7 @@ export default function AddOrderClient({ initialData }) {
     address: "",
     service: initialData?.service || "",
     items: [],
+    isUrgent: false,
     charges: {
       deliveryCharge: initialData?.deliveryCharge || 0,
       discount: initialData?.discount || 0,
@@ -62,6 +63,7 @@ export default function AddOrderClient({ initialData }) {
           value: product.id,
           label: product.label,
           price: product.price,
+          urgentPrice: product.urgentPrice,
         }));
         setOptions(productOptions);
       } catch (error) {
@@ -77,24 +79,77 @@ export default function AddOrderClient({ initialData }) {
       const existingItem = order.items.find(
         (item) => item.product === option.label
       );
-      return existingItem
-        ? {
-            ...existingItem,
-            unitPrice: option.price,
-            amount: existingItem.quantity * option.price,
-          }
-        : {
-            product: option.label,
-            quantity: 1,
-            unitPrice: option.price,
-            amount: option.price,
-          };
+      const isUrgent = existingItem?.urgent ?? false;
+      const quantity = existingItem?.quantity ?? 1;
+
+      const unitPrice =
+        isUrgent && option.urgentPrice != null
+          ? option.urgentPrice
+          : option.price;
+
+      return {
+        product: option.label,
+        quantity,
+        urgent: isUrgent,
+        unitPrice,
+        amount: unitPrice * quantity,
+      };
     });
+
     setOrder((prev) => ({
       ...prev,
       items: updatedItems,
     }));
   };
+
+  const handleUrgentChange = (index, isUrgent) => {
+    const updatedItems = [...order.items];
+    const item = updatedItems[index];
+    const option = options.find((opt) => opt.label === item.product);
+
+    const unitPrice =
+      isUrgent && option?.urgentPrice != null
+        ? option.urgentPrice
+        : option?.price ?? item.unitPrice;
+
+    updatedItems[index] = {
+      ...item,
+      urgent: isUrgent,
+      unitPrice,
+      amount: unitPrice * item.quantity,
+    };
+
+    setOrder((prev) => ({
+      ...prev,
+      items: updatedItems,
+    }));
+  };
+
+  useEffect(() => {
+    if (order.items.length === 0) return;
+
+    const updatedItems = order.items.map((item) => {
+      const matchingOption = options.find((opt) => opt.label === item.product);
+      if (!matchingOption) return item;
+
+      const isUrgent = item.urgent;
+      const newUnitPrice =
+        isUrgent && matchingOption.urgentPrice != null
+          ? matchingOption.urgentPrice
+          : matchingOption.price;
+
+      return {
+        ...item,
+        unitPrice: newUnitPrice,
+        amount: newUnitPrice * item.quantity,
+      };
+    });
+
+    setOrder((prev) => ({
+      ...prev,
+      items: updatedItems,
+    }));
+  }, [options]); // only trigger when `options` change
 
   // Handle customer selection
   const handleCustomerChange = (selectedOption) => {
@@ -169,6 +224,7 @@ export default function AddOrderClient({ initialData }) {
         customerAddress: order.address,
         service: order.service,
         items: order.items,
+        isUrgent: order.isUrgent,
         charges: {
           deliveryCharge: parseFloat(order.charges.deliveryCharge) || 0,
           discount: parseFloat(order.charges.discount) || 0,
@@ -463,6 +519,7 @@ export default function AddOrderClient({ initialData }) {
                   Summary
                 </h3>
                 <div className="grid grid-cols-1 gap-4">
+                  <p>Urgent Order: {order.isUrgent ? "Yes" : "No"}</p>
                   <p>Subtotal: {subtotal.toFixed(2)}</p>
                   <p>Delivery Charge: {deliveryCharge.toFixed(2)}</p>
                   <p>Discount: {discountAmount.toFixed(2)}</p>
@@ -539,35 +596,79 @@ export default function AddOrderClient({ initialData }) {
               order.items.map((item, index) => (
                 <div
                   key={index}
-                  className="mb-4 md:mb-6 p-3 md:p-4 border border-gray-300 rounded-lg shadow-sm"
+                  className={`mb-4 md:mb-6 p-3 md:p-4 border ${
+                    item.urgent ? "bg-red-50 border-red-300" : "border-gray-300"
+                  } rounded-lg shadow-sm`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between mb-3 md:mb-4">
-                    <h4 className="text-md md:text-lg font-semibold text-gray-800">
+                    <h4
+                      className={`text-md md:text-lg font-semibold ${
+                        item.urgent ? "text-red-700" : "text-gray-800"
+                      }`}
+                    >
                       {item.product}
                     </h4>
-                    <div className="flex items-center space-x-2 md:space-x-4 mt-2 md:mt-0">
-                      <label
-                        htmlFor={`quantity-${index}`}
-                        className="text-blue-700 text-sm md:text-base font-medium"
-                      >
-                        Quantity:
-                      </label>
-                      <input
-                        id={`quantity-${index}`}
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleQuantityChange(index, parseInt(e.target.value))
-                        }
-                        className="p-1 md:p-2 w-16 md:w-24 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
-                      />
+
+                    <div className="flex flex-wrap gap-4 mt-2 md:mt-0">
+                      <div className="flex items-center space-x-2">
+                        <label
+                          htmlFor={`quantity-${index}`}
+                          className="text-blue-700 text-sm md:text-base font-medium"
+                        >
+                          Quantity:
+                        </label>
+                        <input
+                          id={`quantity-${index}`}
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            handleQuantityChange(
+                              index,
+                              parseInt(e.target.value)
+                            )
+                          }
+                          className="p-1 md:p-2 w-16 md:w-24 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+
+                      {options.find((opt) => opt.label === item.product)
+                        ?.urgentPrice != null && (
+                        <div className="flex items-center space-x-2">
+                          <label
+                            htmlFor={`urgent-${index}`}
+                            className="text-red-700 text-sm md:text-base font-medium"
+                          >
+                            Urgent:
+                          </label>
+                          <select
+                            id={`urgent-${index}`}
+                            value={item.urgent ? "yes" : "no"}
+                            onChange={(e) =>
+                              handleUrgentChange(
+                                index,
+                                e.target.value === "yes"
+                              )
+                            }
+                            className="p-1 md:p-2 border border-gray-300 rounded-md focus:border-red-500 focus:outline-none"
+                          >
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                          </select>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <p className="text-gray-700 text-sm md:text-base">
                     <span className="font-semibold">Price:</span> Rs.{" "}
-                    {item.unitPrice.toFixed(2)}
+                    {item.unitPrice.toFixed(2)}{" "}
+                    {item.urgent && (
+                      <span className="text-red-600 font-semibold">
+                        (Urgent)
+                      </span>
+                    )}
                   </p>
+
                   <p className="text-gray-700 text-sm md:text-base">
                     <span className="font-semibold">Amount:</span> Rs.{" "}
                     {item.amount.toFixed(2)}

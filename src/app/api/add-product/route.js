@@ -5,23 +5,21 @@ const prisma = new PrismaClient();
 
 export async function POST(request) {
   try {
-    const { name, value, price } = await request.json();
+    const { name, value, price, urgentPrice } = await request.json();
 
-    // Validate incoming data
-    if (!name || !value || isNaN(parseFloat(price))) {
+    if (!name || !value || isNaN(parseFloat(price)) || isNaN(parseFloat(urgentPrice))) {
       return NextResponse.json({ error: "Invalid input data" }, { status: 400 });
     }
 
-    // Create the product
     const product = await prisma.product.create({
       data: {
-        label: name, // Mapping the field name to 'label'
+        label: name,
         value,
         price: parseFloat(price),
+        urgentPrice: parseFloat(urgentPrice),
       },
     });
 
-    // Respond with the created product
     return NextResponse.json(product, { status: 200 });
   } catch (error) {
     console.error("Error adding product:", error.message);
