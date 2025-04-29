@@ -21,7 +21,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Sidebar for large screens */}
-      <div className="hidden md:flex flex-col w-64 bg-gray-900 text-white shadow-lg h-[100%]">
+      <div className="hidden md:flex flex-col w-64 bg-gray-900 text-white shadow-lg h-screen">
         <div className="flex items-center justify-center mt-10">
           <h1 className="text-2xl font-bold tracking-wide">Onyx</h1>
         </div>
