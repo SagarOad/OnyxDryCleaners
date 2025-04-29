@@ -6,8 +6,10 @@ import logo from "@/assets/onyxlogo.jpg";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-const ReceiptClient = ({ data, orderCount, onClose }) => {
+const ReceiptClient = ({ data, orderCount, onClose, deliveryDate }) => {
   const totalAmount = data?.subtotal - data?.discount + data?.deliveryCharge;
+
+  // console.log(deliveryDate, "DATA TEST");
 
   const generatePDF = async () => {
     const receiptElement = document.getElementById("receipt");
@@ -73,6 +75,10 @@ const ReceiptClient = ({ data, orderCount, onClose }) => {
           <p>Host: Vijay Kumar</p>
           <p>Customer: {data?.customer?.name}</p>
           <p>Address: {data?.customer?.address}</p>
+          <p>
+            Delivery Date:{" "}
+            {deliveryDate ? new Date(deliveryDate).toLocaleDateString() : "-"}
+          </p>
         </div>
 
         <div className="mb-4">
@@ -89,7 +95,9 @@ const ReceiptClient = ({ data, orderCount, onClose }) => {
               {data?.items.length ? (
                 data.items.map((item, index) => (
                   <tr key={index}>
-                    <td>{item.product}</td>
+                    <td className={item.urgent ? "font-bold" : ""}>
+                      {item.product}
+                    </td>
                     <td>{item.quantity}</td>
                     <td>
                       Rs. {item.unitPrice.toFixed(2)}{" "}
@@ -99,7 +107,6 @@ const ReceiptClient = ({ data, orderCount, onClose }) => {
                         </span>
                       )}
                     </td>
-
                     <td className="text-right">{item.amount}</td>
                   </tr>
                 ))

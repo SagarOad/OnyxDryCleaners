@@ -14,13 +14,14 @@ export default function Sidebar() {
     { href: "/orders", label: "Orders", icon: <FaListAlt /> },
     { href: "/customers", label: "Customers", icon: <FaUsers /> },
     { href: "/add-existing-customer", label: "Add Customer", icon: <FaTag /> },
+    { href: "/products", label: "Products", icon: <FaTag /> },
     { href: "/add-product", label: "Add Product", icon: <FaTag /> },
   ];
 
   return (
     <>
       {/* Sidebar for large screens */}
-      <div className="hidden md:flex flex-col w-64 bg-gray-900 text-white shadow-lg h-screen">
+      <div className="hidden md:flex flex-col w-64 bg-gray-900 text-white shadow-lg h-[100%]">
         <div className="flex items-center justify-center mt-10">
           <h1 className="text-2xl font-bold tracking-wide">Onyx</h1>
         </div>

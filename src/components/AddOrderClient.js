@@ -21,6 +21,7 @@ export default function AddOrderClient({ initialData }) {
     outsourcingCompanyName: initialData?.outsourcingCompany?.name || "",
     outsourcingCost: initialData?.outsourcingCost || 0,
     existingCustomerId: initialData?.customer?.id || null,
+    deliveryDate: "",
   });
 
   const [showModal, setShowModal] = useState(false);
@@ -33,6 +34,7 @@ export default function AddOrderClient({ initialData }) {
   const [options, setOptions] = useState([]);
   const [existingCustomerOptions, setExistingCustomerOptions] = useState([]);
   const [isNewCustomer, setIsNewCustomer] = useState(false); // Toggle for new/existing customer
+  const [deliveryDate, setDeliveryDate] = useState("");
 
   // Fetch existing customers
   useEffect(() => {
@@ -433,6 +435,21 @@ export default function AddOrderClient({ initialData }) {
                 )}
               </div>
 
+              {/* Delivery Date */}
+              <div className="mb-6">
+                <label className="block text-blue-700 font-medium mb-1">
+                  Delivery Date
+                </label>
+                <input
+                  type="date"
+                  value={deliveryDate || ""}
+                  onChange={(e) =>
+                    setDeliveryDate(e.target.value)
+                  }
+                  className="p-3 w-full border rounded-md"
+                />
+              </div>
+
               {/* Charges */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
@@ -683,6 +700,7 @@ export default function AddOrderClient({ initialData }) {
       {showModal && (
         <ReceiptClient
           data={receiptData}
+          deliveryDate={deliveryDate}
           orderCount={orderCount} // Now it starts from 1020 and increments
           onClose={() => setShowModal(false)}
           totalAmount={totalAmount}
