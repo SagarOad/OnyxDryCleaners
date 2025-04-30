@@ -1,17 +1,18 @@
-// /app/api/update-product/route.js (or similar)
+// /app/api/update-product-price/route.js
 import prisma from "../../../../lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { id, price, urgentPrice } = body;
+    const { id, label, price, urgentPrice } = body;
 
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
+        label,
         price,
-        urgentPrice, // ✅ Make sure this is included
+        urgentPrice,
       },
     });
 

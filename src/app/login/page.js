@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -9,6 +11,13 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false); // State to track loading
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.id) {
+      router.replace("/");
+    }
+  }, [status, session]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +28,9 @@ export default function Login() {
       redirect: false,
       email,
       password,
+      callbackUrl: "/", // explicitly tell NextAuth what to consider "logged in"
     });
+    
 
     if (res.ok) {
       router.push("/"); // Redirect to home after successful login
@@ -32,10 +43,14 @@ export default function Login() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 space-y-8 bg-white shadow-lg rounded-lg">
-        <h2 className="text-3xl font-bold text-center text-gray-800">Sign In</h2>
+        <h2 className="text-3xl font-bold text-center text-gray-800">
+          Sign In
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-lg font-medium text-gray-700">Email</label>
+            <label className="block text-lg font-medium text-gray-700">
+              Email
+            </label>
             <input
               type="text"
               placeholder="Email"
@@ -45,7 +60,9 @@ export default function Login() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
             <input
               type="password"
               placeholder="Password"
@@ -58,7 +75,9 @@ export default function Login() {
             type="submit"
             disabled={loading} // Disable button while loading
             className={`w-full py-3 text-white rounded-lg ${
-              loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
             } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
           >
             {loading ? (
@@ -81,7 +100,9 @@ export default function Login() {
               "Login"
             )}
           </button>
-          {error && <p className="mt-4 text-lg text-center text-red-500">{error}</p>}
+          {error && (
+            <p className="mt-4 text-lg text-center text-red-500">{error}</p>
+          )}
         </form>
       </div>
     </div>

@@ -8,13 +8,13 @@ async function createAdmin() {
 
   await prisma.admin.create({
     data: {
-      email: 'onyxdrycleaners', // Replace with your admin email
+      email: 'onyxdrycleaners', 
       password: hashedPassword,
     },
   });
 
   console.log('Admin created successfully.');
-  prisma.$disconnect(); // Disconnect Prisma after the operation
+  prisma.$disconnect();
 }
 
 createAdmin();

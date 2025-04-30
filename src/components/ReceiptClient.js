@@ -58,7 +58,7 @@ const ReceiptClient = ({ data, orderCount, onClose, deliveryDate }) => {
           <Image src={logo} alt="Logo" className="w-16 mx-auto mb-2" />
           <h4 className="text-lg font-semibold">Onyx Dry Cleaners</h4>
           <p className="text-xs">
-            Abdullah Sports Tower Qasimabad, Hyderabad, Sindh
+            Shop# CG-11 Abdullah Sports Tower Qasimabad, Hyderabad, Sindh
           </p>
           <p className="text-xs">Phone: 03212952737</p>
         </div>

@@ -32,9 +32,16 @@ const ProductTableClient = () => {
     fetchProducts();
   }, [currentPage, searchQuery]);
 
-  const handleEdit = (id, price, urgentPrice) => {
-    setEditingId(id);
-    setFormState({ [id]: { price, urgentPrice } });
+  const handleEdit = (product) => {
+    setEditingId(product.id);
+    setFormState((prev) => ({
+      ...prev,
+      [product.id]: {
+        label: product.label,
+        price: product.price,
+        urgentPrice: product.urgentPrice ?? "",
+      },
+    }));
   };
 
   const handleChange = (id, field, value) => {
@@ -48,12 +55,35 @@ const ProductTableClient = () => {
   };
 
   const handleSave = async (id) => {
-    const price = parseFloat(formState[id]?.price);
-    const urgentPrice = parseFloat(formState[id]?.urgentPrice);
-    if (!isNaN(price) && !isNaN(urgentPrice)) {
-      await axios.put("/api/update-product-price", { id, price, urgentPrice });
-      setEditingId(null);
-      fetchProducts();
+    const { label, price, urgentPrice } = formState[id];
+    const parsedPrice = parseFloat(price);
+    const parsedUrgentPrice = parseFloat(urgentPrice);
+
+    if (!isNaN(parsedPrice) && !isNaN(parsedUrgentPrice)) {
+      try {
+        await axios.put("/api/update-product-price", {
+          id,
+          label,
+          price: parsedPrice,
+          urgentPrice: parsedUrgentPrice,
+        });
+        setEditingId(null);
+        fetchProducts();
+      } catch (err) {
+        console.error("Save failed:", err);
+      }
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this product?"))
+      return;
+
+    try {
+      await axios.delete("/api/delete-product", { data: { id } });
+      fetchProducts(); // Refresh list
+    } catch (err) {
+      console.error("Delete failed:", err);
     }
   };
 
@@ -86,17 +116,40 @@ const ProductTableClient = () => {
           {loading ? (
             [...Array(5)].map((_, idx) => (
               <tr key={idx} className="animate-pulse">
-                <td className="p-3"><div className="h-4 bg-gray-300 rounded w-3/4"></div></td>
-                <td className="p-3"><div className="h-4 bg-gray-300 rounded w-2/3"></div></td>
-                <td className="p-3"><div className="h-4 bg-gray-300 rounded w-1/2"></div></td>
-                <td className="p-3"><div className="h-4 bg-gray-300 rounded w-1/2"></div></td>
-                <td className="p-3"><div className="h-8 bg-gray-300 rounded w-20"></div></td>
+                <td className="p-3">
+                  <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                </td>
+                <td className="p-3">
+                  <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+                </td>
+                <td className="p-3">
+                  <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                </td>
+                <td className="p-3">
+                  <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                </td>
+                <td className="p-3">
+                  <div className="h-8 bg-gray-300 rounded w-20"></div>
+                </td>
               </tr>
             ))
           ) : products.length > 0 ? (
             products.map((p) => (
               <tr key={p.id} className="border-b">
-                <td className="p-3">{p.label}</td>
+                <td className="p-3">
+                  {editingId === p.id ? (
+                    <input
+                      type="text"
+                      value={formState[p.id]?.label || ""}
+                      onChange={(e) =>
+                        handleChange(p.id, "label", e.target.value)
+                      }
+                      className="border px-2 py-1 rounded w-full"
+                    />
+                  ) : (
+                    p.label
+                  )}
+                </td>
                 <td className="p-3">{p.value}</td>
                 <td className="p-3">
                   {editingId === p.id ? (
@@ -126,7 +179,7 @@ const ProductTableClient = () => {
                     `Rs ${p.urgentPrice ?? "-"}`
                   )}
                 </td>
-                <td className="p-3">
+                <td className="p-3 space-x-2">
                   {editingId === p.id ? (
                     <button
                       onClick={() => handleSave(p.id)}
@@ -136,14 +189,18 @@ const ProductTableClient = () => {
                     </button>
                   ) : (
                     <button
-                      onClick={() =>
-                        handleEdit(p.id, p.price, p.urgentPrice)
-                      }
+                      onClick={() => handleEdit(p)}
                       className="bg-blue-600 text-white px-3 py-1 rounded"
                     >
                       Edit
                     </button>
                   )}
+                  <button
+                    onClick={() => handleDelete(p.id)}
+                    className="bg-red-600 text-white px-3 py-1 rounded"
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))

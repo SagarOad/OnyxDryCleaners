@@ -1,6 +1,7 @@
-import NextAuth from 'next-auth';
-import { authOptions } from './authOptions';
+// app/api/auth/[...nextauth]/route.js
+import NextAuth from "next-auth";
+import { authOptions } from "@/lib/authOptions";
 
-// For handling GET and POST requests in the App Router
-export const GET = NextAuth(authOptions);
-export const POST = NextAuth(authOptions);
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };
