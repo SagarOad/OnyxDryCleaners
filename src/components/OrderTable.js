@@ -48,29 +48,25 @@ export default function OrderTable() {
   const deleteOrder = async (orderId) => {
     setLoadingOrderId(orderId);
     try {
-      const response = await axios.post("/api/update-order-live-status", {
-        orderId,
-        liveStatus: "delete",
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "DELETE",
       });
 
-      const updatedOrder = response.data;
+      if (!res.ok) {
+        throw new Error("Failed to delete order");
+      }
 
-      setOrders((prevOrders) =>
-        prevOrders.filter((order) => order.id !== updatedOrder.id)
-      );
-
+      setOrders((prev) => prev.filter((order) => order.id !== orderId));
       setMessagePopup({
         type: "success",
-        message: "Order deleted successfully!",
+        message: "Order deleted successfully",
       });
     } catch (error) {
-      console.error("Failed to delete order:", error);
-      setMessagePopup({
-        type: "error",
-        message: "Failed to delete order.",
-      });
+      console.error(error);
+      setMessagePopup({ type: "error", message: "Error deleting order" });
     } finally {
       setLoadingOrderId(null);
+      setTimeout(() => setMessagePopup(null), 3000);
     }
   };
 
@@ -108,17 +104,19 @@ export default function OrderTable() {
   };
 
   const filteredOrders = orders
-  .filter((order) =>
-    statusFilter === "all" ? true : order?.status?.status === statusFilter
-  )
-  .filter((order) =>
-    searchQuery === ""
-      ? true
-      : order?.customer?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order?.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order?.customer?.contact?.includes(searchQuery) // Search by contact number
-  );
-
+    .filter((order) =>
+      statusFilter === "all" ? true : order?.status?.status === statusFilter
+    )
+    .filter(
+      (order) =>
+        searchQuery === ""
+          ? true
+          : order?.customer?.name
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            order?.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            order?.customer?.contact?.includes(searchQuery) // Search by contact number
+    );
 
   const indexOfFirstOrder = (currentPage - 1) * ordersPerPage;
 
