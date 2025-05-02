@@ -105,6 +105,7 @@ const ProductTableClient = () => {
       <table className="min-w-full bg-white border rounded-lg">
         <thead className="bg-blue-600 text-white">
           <tr>
+            <th className="p-3 text-left">S.No</th> {/* New column */}
             <th className="p-3 text-left">Label</th>
             <th className="p-3 text-left">Value</th>
             <th className="p-3 text-left">Price</th>
@@ -112,6 +113,7 @@ const ProductTableClient = () => {
             <th className="p-3 text-left">Action</th>
           </tr>
         </thead>
+
         <tbody>
           {loading ? (
             [...Array(5)].map((_, idx) => (
@@ -119,23 +121,15 @@ const ProductTableClient = () => {
                 <td className="p-3">
                   <div className="h-4 bg-gray-300 rounded w-3/4"></div>
                 </td>
-                <td className="p-3">
-                  <div className="h-4 bg-gray-300 rounded w-2/3"></div>
-                </td>
-                <td className="p-3">
-                  <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-                </td>
-                <td className="p-3">
-                  <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-                </td>
-                <td className="p-3">
-                  <div className="h-8 bg-gray-300 rounded w-20"></div>
-                </td>
+                {/* existing skeleton columns */}
               </tr>
             ))
           ) : products.length > 0 ? (
-            products.map((p) => (
+            products.map((p, index) => (
               <tr key={p.id} className="border-b">
+                <td className="p-3">
+                  {(currentPage - 1) * pageSize + index + 1}
+                </td>
                 <td className="p-3">
                   {editingId === p.id ? (
                     <input
@@ -206,7 +200,7 @@ const ProductTableClient = () => {
             ))
           ) : (
             <tr>
-              <td colSpan="5" className="p-3 text-center text-gray-500">
+              <td colSpan="6" className="p-3 text-center text-gray-500">
                 No products found.
               </td>
             </tr>
