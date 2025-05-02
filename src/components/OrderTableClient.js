@@ -177,22 +177,27 @@ const CustomerTableClient = () => {
         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
           <thead className="bg-blue-600 text-white">
             <tr>
+              <th className="py-2 px-4">#</th>
               <th className="py-2 px-4">Customer</th>
               <th className="py-2 px-4">Contact</th>
               <th className="py-2 px-4">Address</th>
               <th className="py-2 px-4">Service</th>
-              <th className="py-2 px-4">Actions</th> {/* New column */}
+              <th className="py-2 px-4">Actions</th>
             </tr>
           </thead>
+
           <TransitionGroup component="tbody">
             {customers.length > 0 ? (
-              customers.map((customer) => (
+              customers.map((customer, index) => (
                 <CSSTransition
                   key={customer.id}
                   timeout={300}
                   classNames="fade"
                 >
                   <tr className="border-b">
+                    <td className="py-2 px-4">
+                      {(currentPage - 1) * ordersPerPage + index + 1}
+                    </td>
                     <td className="py-2 px-4">{customer.name}</td>
                     <td className="py-2 px-4">{customer.contact}</td>
                     <td className="py-2 px-4">{customer.address || "N/A"}</td>
@@ -219,7 +224,7 @@ const CustomerTableClient = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="py-4 px-6 text-center">
+                <td colSpan="6" className="py-4 px-6 text-center">
                   No customers found
                 </td>
               </tr>

@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { id, name, contact, address, service } = body; // ✅ Destructure all needed fields
+    const { id, name, contact, address, service } = body; // Destructure all needed fields
 
     const updatedCustomer = await prisma.existingCustomers.update({
       where: { id },
