@@ -5,14 +5,15 @@ import { NextResponse } from "next/server";
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { id, name, email, phone } = body; // include all fields you want to update
+    const { id, name, contact, address, service } = body; // ✅ Destructure all needed fields
 
     const updatedCustomer = await prisma.existingCustomers.update({
       where: { id },
       data: {
         name,
-        email,
-        phone,
+        contact, // changed from `phone` to `contact` to match your schema
+        address,
+        service,
       },
     });
 

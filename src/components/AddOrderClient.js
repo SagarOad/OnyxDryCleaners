@@ -275,8 +275,8 @@ export default function AddOrderClient({ initialData }) {
   // Calculate totals
   const subtotal = order.items.reduce((acc, item) => acc + item.amount, 0);
   const deliveryCharge = parseFloat(order.charges.deliveryCharge) || 0;
-  const discountPercentage = parseFloat(order.charges.discount) || 0;
-  const discountAmount = (subtotal * discountPercentage) / 100;
+  // const discountPercentage = parseFloat(order.charges.discount) || 0;
+  const discountAmount = parseFloat(order.charges.discount) || 0;
   const totalAmount = (subtotal - discountAmount + deliveryCharge).toFixed(2);
 
   return (
@@ -474,7 +474,7 @@ export default function AddOrderClient({ initialData }) {
 
                 <div>
                   <label className="block text-blue-700 font-medium mb-1">
-                    Discount %
+                    Discount
                   </label>
                   <input
                     type="number"

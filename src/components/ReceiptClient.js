@@ -17,7 +17,7 @@ const ReceiptClient = ({ data, orderCount, onClose, deliveryDate }) => {
   const subtotal = data?.items?.reduce((acc, item) => acc + item.amount, 0);
 
   // 2. Calculate discountAmount as a percentage of subtotal
-  const discountAmount = (subtotal * (data?.discount || 0)) / 100;
+  const discountAmount = data?.discount || 0; // Treat it as a fixed amount now
 
   // 3. Final total
   const totalAmount = subtotal - discountAmount + (data?.deliveryCharge || 0);
@@ -144,7 +144,7 @@ const ReceiptClient = ({ data, orderCount, onClose, deliveryDate }) => {
             Delivery Charge: Rs. {data?.deliveryCharge?.toFixed(2) || "0.00"}
           </p>
           <p>
-            Discount ({data?.discount}%): Rs. {discountAmount.toFixed(2)}
+            Discount Rs. {discountAmount.toFixed(2)}
           </p>
           <p className="font-bold">Total: Rs. {totalAmount.toFixed(2)}</p>
         </div>
