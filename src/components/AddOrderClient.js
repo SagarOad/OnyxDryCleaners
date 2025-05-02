@@ -35,7 +35,7 @@ export default function AddOrderClient({ initialData }) {
   const [existingCustomerOptions, setExistingCustomerOptions] = useState([]);
   const [isNewCustomer, setIsNewCustomer] = useState(false); // Toggle for new/existing customer
   const [deliveryDate, setDeliveryDate] = useState("");
-
+  
   // Fetch existing customers
   useEffect(() => {
     const fetchExistingCustomers = async () => {
@@ -474,7 +474,7 @@ export default function AddOrderClient({ initialData }) {
 
                 <div>
                   <label className="block text-blue-700 font-medium mb-1">
-                    Discount
+                    Discount %
                   </label>
                   <input
                     type="number"

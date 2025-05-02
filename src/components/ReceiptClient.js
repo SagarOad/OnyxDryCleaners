@@ -7,7 +7,20 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 const ReceiptClient = ({ data, orderCount, onClose, deliveryDate }) => {
-  const totalAmount = data?.subtotal - data?.discount + data?.deliveryCharge;
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year.slice(2)}`;
+  };
+
+  // 1. Recalculate subtotal from items
+  const subtotal = data?.items?.reduce((acc, item) => acc + item.amount, 0);
+
+  // 2. Calculate discountAmount as a percentage of subtotal
+  const discountAmount = (subtotal * (data?.discount || 0)) / 100;
+
+  // 3. Final total
+  const totalAmount = subtotal - discountAmount + (data?.deliveryCharge || 0);
 
   // console.log(deliveryDate, "DATA TEST");
 
@@ -77,7 +90,11 @@ const ReceiptClient = ({ data, orderCount, onClose, deliveryDate }) => {
           <p>Address: {data?.customer?.address}</p>
           <p>
             Delivery Date:{" "}
-            {deliveryDate ? new Date(deliveryDate).toLocaleDateString() : "-"}
+            {deliveryDate && (
+              <p className="mt-2 text-sm text-gray-600">
+                Selected: {formatDate(deliveryDate)}
+              </p>
+            )}
           </p>
         </div>
 
@@ -122,10 +139,14 @@ const ReceiptClient = ({ data, orderCount, onClose, deliveryDate }) => {
         </div>
 
         <div className="text-right text-sm">
-          <p>Subtotal: Rs. {data?.subtotal}</p>
-          <p>Delivery Charge: Rs. {data?.deliveryCharge}</p>
-          <p>Discount: Rs. {data?.discount}</p>
-          <p className="font-bold">Total: Rs. {totalAmount}</p>
+          <p>Subtotal: Rs. {subtotal.toFixed(2)}</p>
+          <p>
+            Delivery Charge: Rs. {data?.deliveryCharge?.toFixed(2) || "0.00"}
+          </p>
+          <p>
+            Discount ({data?.discount}%): Rs. {discountAmount.toFixed(2)}
+          </p>
+          <p className="font-bold">Total: Rs. {totalAmount.toFixed(2)}</p>
         </div>
 
         <div className="text-center text-sm mt-4">

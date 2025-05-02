@@ -45,31 +45,6 @@ export default function OrderTable() {
     fetchOrders(currentPage);
   }, [currentPage, statusFilter, searchQuery]);
 
-  const deleteOrder = async (orderId) => {
-    setLoadingOrderId(orderId);
-    try {
-      const res = await fetch(`/api/orders/${orderId}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to delete order");
-      }
-
-      setOrders((prev) => prev.filter((order) => order.id !== orderId));
-      setMessagePopup({
-        type: "success",
-        message: "Order deleted successfully",
-      });
-    } catch (error) {
-      console.error(error);
-      setMessagePopup({ type: "error", message: "Error deleting order" });
-    } finally {
-      setLoadingOrderId(null);
-      setTimeout(() => setMessagePopup(null), 3000);
-    }
-  };
-
   const updateOrderStatus = async (orderId, status) => {
     setLoadingOrderId(orderId);
     try {
@@ -100,6 +75,19 @@ export default function OrderTable() {
       });
     } finally {
       setLoadingOrderId(null);
+    }
+  };
+
+  // delete funtion
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this product?"))
+      return;
+
+    try {
+      await axios.delete("/api/delete-order", { data: { id } });
+      fetchOrders(); // Refresh list
+    } catch (err) {
+      console.error("Delete failed:", err);
     }
   };
 
@@ -274,7 +262,7 @@ export default function OrderTable() {
                       <FcProcess />
                     </button>
                     <button
-                      onClick={() => deleteOrder(order.id)}
+                      onClick={() => handleDelete(order.id)}
                       disabled={loadingOrderId === order.id}
                       className={`${
                         loadingOrderId === order.id ? "opacity-50" : ""

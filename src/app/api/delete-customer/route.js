@@ -1,4 +1,3 @@
-// /app/api/delete-product/route.js
 import prisma from "../../../../lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -7,15 +6,15 @@ export async function DELETE(request) {
     const body = await request.json();
     const { id } = body;
 
-    await prisma.product.delete({
+    await prisma.existingCustomers.delete({
       where: { id },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete product:", error);
+    console.error("Failed to delete Customer:", error);
     return NextResponse.json(
-      { error: "Failed to delete product", details: error.message },
+      { error: "Failed to delete Customer", details: error.message },
       { status: 500 }
     );
   }

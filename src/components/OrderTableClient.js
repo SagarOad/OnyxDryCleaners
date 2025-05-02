@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
+import EditCustomerModal from "./EditCustomerModal";
 
 const CustomerTableClient = () => {
   const [customers, setCustomers] = useState([]);
@@ -10,8 +11,9 @@ const CustomerTableClient = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const ordersPerPage = 10;
-
+  const ordersPerPage = 15;
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   useEffect(() => {
     fetchCustomers(); // This will now handle both search and pagination
   }, [currentPage, searchQuery]);
@@ -21,22 +23,52 @@ const CustomerTableClient = () => {
       setLoading(true);
       const response = await axios.get("/api/get-customers", {
         params: {
-          page: currentPage,
-          pageSize: ordersPerPage,
           searchQuery,
+          page: currentPage,
+          limit: ordersPerPage,
         },
       });
-      setCustomers(response.data.customers);
-      setTotalPages(response.data.totalPages);
+
+      setCustomers(response.data.existingCustomers);
+      // Optional: if you want to paginate manually (on frontend)
+      setTotalPages(
+        Math.ceil(response.data.totalExistingCustomers / ordersPerPage)
+      );
     } catch (error) {
-      console.error("Error fetching customers:", error);
+      console.error("Error fetching existing customers:", error);
     } finally {
       setLoading(false);
     }
   };
+
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1); // Reset to first page on search
+  };
+
+  const handleEditSubmit = async (updatedCustomer) => {
+    try {
+      await axios.put(`/api/update-customer`, updatedCustomer);
+
+      await fetchCustomers();
+      setIsEditModalOpen(false);
+      setEditingCustomer(null);
+    } catch (error) {
+      console.error("Failed to update customer:", error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this Customer?"))
+      return;
+
+    try {
+      await axios.delete("/api/delete-customer", { data: { id } });
+
+      fetchCustomers(); // Refresh list
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   };
 
   const renderPagination = () => {
@@ -146,10 +178,10 @@ const CustomerTableClient = () => {
           <thead className="bg-blue-600 text-white">
             <tr>
               <th className="py-2 px-4">Customer</th>
-              <th className="py-2 px-4">Service</th>
-              <th className="py-2 px-4">Status</th>
-              <th className="py-2 px-4">Created At</th>
               <th className="py-2 px-4">Contact</th>
+              <th className="py-2 px-4">Address</th>
+              <th className="py-2 px-4">Service</th>
+              <th className="py-2 px-4">Actions</th> {/* New column */}
             </tr>
           </thead>
           <TransitionGroup component="tbody">
@@ -162,18 +194,26 @@ const CustomerTableClient = () => {
                 >
                   <tr className="border-b">
                     <td className="py-2 px-4">{customer.name}</td>
-                    <td className="py-2 px-4">{customer.service}</td>
-                    <td className="py-2 px-4">
-                      {customer.orders[0]?.status.status || "N/A"}
-                    </td>
-                    <td className="py-2 px-4">
-                      {customer.orders[0]?.createdAt
-                        ? new Date(
-                            customer.orders[0].createdAt
-                          ).toLocaleDateString()
-                        : "N/A"}
-                    </td>
                     <td className="py-2 px-4">{customer.contact}</td>
+                    <td className="py-2 px-4">{customer.address || "N/A"}</td>
+                    <td className="py-2 px-4">{customer.service || "N/A"}</td>
+                    <td className="py-2 px-4">
+                      <button
+                        onClick={() => {
+                          setEditingCustomer(customer);
+                          setIsEditModalOpen(true);
+                        }}
+                        className="bg-blue-600 text-white px-3 mr-2 py-1 rounded"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(customer.id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded"
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 </CSSTransition>
               ))
@@ -190,6 +230,17 @@ const CustomerTableClient = () => {
 
       {/* Pagination */}
       {renderPagination()}
+      {/* Edit Modal */}
+      {isEditModalOpen && editingCustomer && (
+        <EditCustomerModal
+          customer={editingCustomer}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingCustomer(null);
+          }}
+          onSubmit={handleEditSubmit}
+        />
+      )}
     </div>
   );
 };
