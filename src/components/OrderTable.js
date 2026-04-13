@@ -161,37 +161,20 @@ export default function OrderTable() {
     });
   };
 
-  const bulkAllMatching = (action, status) => {
-    const label =
-      action === "delete"
-        ? "DELETE ALL orders matching the current filters"
-        : `set ALL matching orders to "${status}"`;
+  const bulkMarkAllMatchingCompleted = () => {
     if (
       !window.confirm(
-        `${label}?\n\nThis affects ${totalOrders} order(s). This cannot be undone for delete.`
+        `Set ALL orders matching the current filters to "completed"?\n\nThis affects ${totalOrders} order(s).`
       )
     )
       return;
-    if (action === "delete") {
-      const second = window.prompt(
-        'Type DELETE in capitals to confirm bulk delete of all matching orders:'
-      );
-      if (second !== "DELETE") {
-        setMessagePopup({ type: "error", message: "Bulk delete cancelled." });
-        return;
-      }
-    }
-    const body =
-      action === "delete"
-        ? { action: "delete", scope: "filter", statusFilter, searchQuery }
-        : {
-            action: "setStatus",
-            scope: "filter",
-            statusFilter,
-            searchQuery,
-            status,
-          };
-    postBulk(body);
+    postBulk({
+      action: "setStatus",
+      scope: "filter",
+      statusFilter,
+      searchQuery,
+      status: "completed",
+    });
   };
 
   const updateOrderStatus = async (orderId, status) => {
@@ -333,26 +316,10 @@ export default function OrderTable() {
             <button
               type="button"
               disabled={bulkLoading || totalOrders === 0}
-              onClick={() => bulkAllMatching("setStatus", "completed")}
+              onClick={bulkMarkAllMatchingCompleted}
               className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-900 disabled:opacity-40"
             >
               Mark all completed
-            </button>
-            <button
-              type="button"
-              disabled={bulkLoading || totalOrders === 0}
-              onClick={() => bulkAllMatching("setStatus", "processing")}
-              className="rounded-lg bg-slate-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700 disabled:opacity-40"
-            >
-              Mark all processing
-            </button>
-            <button
-              type="button"
-              disabled={bulkLoading || totalOrders === 0}
-              onClick={() => bulkAllMatching("delete")}
-              className="rounded-lg border border-red-400 bg-white px-3 py-1.5 text-xs font-medium text-red-800 hover:bg-red-50 disabled:opacity-40"
-            >
-              Delete all matching
             </button>
           </div>
         </div>
