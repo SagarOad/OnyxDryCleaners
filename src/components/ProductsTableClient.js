@@ -3,24 +3,27 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const ProductTableClient = () => {
+export default function ProductsTableClient() {
   const [products, setProducts] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [editKind, setEditKind] = useState(null);
   const [formState, setFormState] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const pageSize = 10;
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
+      setSaveError(null);
       const res = await axios.get("/api/products-list", {
         params: { page: currentPage, pageSize, searchQuery },
       });
       setProducts(res.data.products);
-      setTotalPages(res.data.totalPages);
+      setTotalPages(res.data.totalPages || 1);
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {
@@ -32,16 +35,27 @@ const ProductTableClient = () => {
     fetchProducts();
   }, [currentPage, searchQuery]);
 
-  const handleEdit = (product) => {
+  const openEdit = (product, kind) => {
     setEditingId(product.id);
+    setEditKind(kind);
+    setSaveError(null);
     setFormState((prev) => ({
       ...prev,
       [product.id]: {
         label: product.label,
         price: product.price,
-        urgentPrice: product.urgentPrice ?? "",
+        urgentPrice:
+          product.urgentPrice === 0 || product.urgentPrice == null
+            ? ""
+            : String(product.urgentPrice),
       },
     }));
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditKind(null);
+    setSaveError(null);
   };
 
   const handleChange = (id, field, value) => {
@@ -54,24 +68,51 @@ const ProductTableClient = () => {
     }));
   };
 
-  const handleSave = async (id) => {
-    const { label, price, urgentPrice } = formState[id];
-    const parsedPrice = parseFloat(price);
-    const parsedUrgentPrice = parseFloat(urgentPrice);
+  const handleSave = async (product) => {
+    const id = product.id;
+    const row = formState[id];
+    if (!row) return;
 
-    if (!isNaN(parsedPrice) && !isNaN(parsedUrgentPrice)) {
-      try {
-        await axios.put("/api/update-product-price", {
-          id,
-          label,
-          price: parsedPrice,
-          urgentPrice: parsedUrgentPrice,
-        });
-        setEditingId(null);
-        fetchProducts();
-      } catch (err) {
-        console.error("Save failed:", err);
+    const label =
+      editKind === "prices" ? product.label : (row.label ?? "").trim();
+    if (!label) {
+      setSaveError("Product name cannot be empty.");
+      return;
+    }
+
+    const parsedPrice = parseFloat(row.price);
+    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+      setSaveError("Enter a valid standard price (0 or greater).");
+      return;
+    }
+
+    const urgentRaw = row.urgentPrice;
+    let parsedUrgentPrice = 0;
+    if (urgentRaw !== "" && urgentRaw != null) {
+      const u = parseFloat(urgentRaw);
+      if (Number.isNaN(u) || u < 0) {
+        setSaveError("Enter a valid urgent price or leave it blank for 0.");
+        return;
       }
+      parsedUrgentPrice = u;
+    }
+
+    try {
+      setSaveError(null);
+      await axios.put("/api/update-product-price", {
+        id,
+        label,
+        price: parsedPrice,
+        urgentPrice: parsedUrgentPrice,
+      });
+      cancelEdit();
+      fetchProducts();
+    } catch (err) {
+      console.error("Save failed:", err);
+      setSaveError(
+        err.response?.data?.error ||
+          "Could not save changes. Please try again."
+      );
     }
   };
 
@@ -81,15 +122,15 @@ const ProductTableClient = () => {
 
     try {
       await axios.delete("/api/delete-product", { data: { id } });
-      fetchProducts(); // Refresh list
+      fetchProducts();
     } catch (err) {
       console.error("Delete failed:", err);
     }
   };
 
   return (
-    <div className="p-4">
-      <div className="mb-4 flex justify-between">
+    <div className="min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <input
           type="text"
           value={searchQuery}
@@ -98,136 +139,199 @@ const ProductTableClient = () => {
             setCurrentPage(1);
           }}
           placeholder="Search products..."
-          className="border px-3 py-2 rounded-md"
+          className="w-full sm:max-w-md px-3 py-2 border border-slate-300 rounded-md text-slate-900 bg-white"
         />
       </div>
 
-      <table className="min-w-full bg-white border rounded-lg">
-        <thead className="bg-blue-600 text-white">
-          <tr>
-            <th className="p-3 text-left">S.No</th> {/* New column */}
-            <th className="p-3 text-left">Label</th>
-            <th className="p-3 text-left">Value</th>
-            <th className="p-3 text-left">Price</th>
-            <th className="p-3 text-left">Urgent Price</th>
-            <th className="p-3 text-left">Action</th>
-          </tr>
-        </thead>
+      {saveError && (
+        <div
+          className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+          role="alert"
+        >
+          {saveError}
+        </div>
+      )}
 
-        <tbody>
-          {loading ? (
-            [...Array(5)].map((_, idx) => (
-              <tr key={idx} className="animate-pulse">
-                <td className="p-3">
-                  <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                </td>
-                {/* existing skeleton columns */}
-              </tr>
-            ))
-          ) : products.length > 0 ? (
-            products.map((p, index) => (
-              <tr key={p.id} className="border-b">
-                <td className="p-3">
-                  {(currentPage - 1) * pageSize + index + 1}
-                </td>
-                <td className="p-3">
-                  {editingId === p.id ? (
-                    <input
-                      type="text"
-                      value={formState[p.id]?.label || ""}
-                      onChange={(e) =>
-                        handleChange(p.id, "label", e.target.value)
-                      }
-                      className="border px-2 py-1 rounded w-full"
-                    />
-                  ) : (
-                    p.label
-                  )}
-                </td>
-                <td className="p-3">{p.value}</td>
-                <td className="p-3">
-                  {editingId === p.id ? (
-                    <input
-                      type="number"
-                      value={formState[p.id]?.price || ""}
-                      onChange={(e) =>
-                        handleChange(p.id, "price", e.target.value)
-                      }
-                      className="border px-2 py-1 rounded w-24"
-                    />
-                  ) : (
-                    `Rs ${p.price}`
-                  )}
-                </td>
-                <td className="p-3">
-                  {editingId === p.id ? (
-                    <input
-                      type="number"
-                      value={formState[p.id]?.urgentPrice || ""}
-                      onChange={(e) =>
-                        handleChange(p.id, "urgentPrice", e.target.value)
-                      }
-                      className="border px-2 py-1 rounded w-24"
-                    />
-                  ) : (
-                    `Rs ${p.urgentPrice ?? "-"}`
-                  )}
-                </td>
-                <td className="p-3 space-x-2">
-                  {editingId === p.id ? (
-                    <button
-                      onClick={() => handleSave(p.id)}
-                      className="bg-green-600 text-white px-3 py-1 rounded"
-                    >
-                      Save
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleEdit(p)}
-                      className="bg-blue-600 text-white px-3 py-1 rounded"
-                    >
-                      Edit
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleDelete(p.id)}
-                    className="bg-red-600 text-white px-3 py-1 rounded"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
-          ) : (
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+        <table className="w-full min-w-[800px] text-sm text-left">
+          <thead className="bg-slate-800 text-white">
             <tr>
-              <td colSpan="6" className="p-3 text-center text-gray-500">
-                No products found.
-              </td>
+              <th className="py-3 px-3 font-medium whitespace-nowrap">S.No</th>
+              <th className="py-3 px-3 font-medium">Label</th>
+              <th className="py-3 px-3 font-medium whitespace-nowrap">Code</th>
+              <th className="py-3 px-3 font-medium whitespace-nowrap">
+                Standard price
+              </th>
+              <th className="py-3 px-3 font-medium whitespace-nowrap">
+                Urgent price
+              </th>
+              <th className="py-3 px-3 font-medium text-right whitespace-nowrap">
+                Actions
+              </th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
 
-      {/* Pagination */}
+          <tbody>
+            {loading ? (
+              [...Array(5)].map((_, idx) => (
+                <tr key={idx} className="border-b border-slate-100">
+                  <td colSpan={6} className="p-3">
+                    <div className="h-4 bg-slate-200 rounded animate-pulse" />
+                  </td>
+                </tr>
+              ))
+            ) : products.length > 0 ? (
+              products.map((p, index) => (
+                <tr
+                  key={p.id}
+                  className="border-b border-slate-100 odd:bg-slate-50/80"
+                >
+                  <td className="py-3 px-3 text-slate-700 whitespace-nowrap">
+                    {(currentPage - 1) * pageSize + index + 1}
+                  </td>
+                  <td className="py-3 px-3 text-slate-800">
+                    {editingId === p.id && editKind === "full" ? (
+                      <input
+                        type="text"
+                        value={formState[p.id]?.label ?? ""}
+                        onChange={(e) =>
+                          handleChange(p.id, "label", e.target.value)
+                        }
+                        className="w-full min-w-[8rem] max-w-xs border border-slate-300 rounded px-2 py-1.5 text-slate-900"
+                      />
+                    ) : (
+                      <span className="font-medium">{p.label}</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-3 text-slate-600 font-mono text-xs whitespace-nowrap">
+                    {p.value}
+                  </td>
+                  <td className="py-3 px-3 whitespace-nowrap">
+                    {editingId === p.id ? (
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={formState[p.id]?.price ?? ""}
+                        onChange={(e) =>
+                          handleChange(p.id, "price", e.target.value)
+                        }
+                        className="w-28 border border-slate-300 rounded px-2 py-1.5 text-slate-900"
+                      />
+                    ) : (
+                      <span className="text-slate-800">Rs {p.price}</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-3 whitespace-nowrap">
+                    {editingId === p.id ? (
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        placeholder="0"
+                        value={formState[p.id]?.urgentPrice ?? ""}
+                        onChange={(e) =>
+                          handleChange(p.id, "urgentPrice", e.target.value)
+                        }
+                        className="w-28 border border-slate-300 rounded px-2 py-1.5 text-slate-900"
+                      />
+                    ) : (
+                      <span className="text-slate-800">
+                        {p.urgentPrice != null && p.urgentPrice > 0
+                          ? `Rs ${p.urgentPrice}`
+                          : "—"}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-3 px-3 text-right">
+                    {editingId === p.id ? (
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleSave(p)}
+                          className="inline-flex rounded-md bg-emerald-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-emerald-700"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEdit}
+                          className="inline-flex rounded-md border border-slate-300 bg-white text-slate-800 px-3 py-1.5 text-xs font-medium hover:bg-slate-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <button
+                          type="button"
+                          title="Change standard and urgent rates only"
+                          onClick={() => openEdit(p, "prices")}
+                          className="inline-flex rounded-md bg-slate-800 text-white px-3 py-1.5 text-xs font-medium hover:bg-slate-700"
+                        >
+                          Edit rates
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openEdit(p, "full")}
+                          className="inline-flex rounded-md border border-slate-300 bg-white text-slate-800 px-3 py-1.5 text-xs font-medium hover:bg-slate-50"
+                        >
+                          Rename
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(p.id)}
+                          className="inline-flex rounded-md bg-red-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-red-700"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="py-8 px-4 text-center text-slate-500">
+                  No products found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
       {totalPages > 1 && (
-        <div className="mt-4 flex justify-center space-x-2">
-          {[...Array(totalPages)].map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentPage(index + 1)}
-              className={`px-3 py-1 rounded ${
-                currentPage === index + 1
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200"
-              }`}
-            >
-              {index + 1}
-            </button>
-          ))}
+        <div className="flex flex-wrap justify-center items-center gap-2 mt-4">
+          <button
+            type="button"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className={`px-3 py-1.5 text-sm rounded-md ${
+              currentPage === 1
+                ? "bg-slate-200 text-slate-500"
+                : "bg-slate-800 text-white"
+            }`}
+          >
+            Previous
+          </button>
+          <span className="text-sm text-slate-600 px-2">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className={`px-3 py-1.5 text-sm rounded-md ${
+              currentPage === totalPages
+                ? "bg-slate-200 text-slate-500"
+                : "bg-slate-800 text-white"
+            }`}
+          >
+            Next
+          </button>
         </div>
       )}
     </div>
   );
-};
-
-export default ProductTableClient;
+}

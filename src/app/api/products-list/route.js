@@ -41,7 +41,7 @@ export async function GET(request) {
     return NextResponse.json({
       products,
       totalProducts,
-      totalPages: Math.ceil(totalProducts / pageSize),
+      totalPages: Math.max(1, Math.ceil(totalProducts / pageSize)),
     });
   } catch (error) {
     console.error("Failed to fetch products:", error);

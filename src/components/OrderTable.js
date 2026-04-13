@@ -1,14 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  FaCheckCircle,
-  FaTimesCircle,
-  FaSyncAlt,
-  FaTrashAlt,
-} from "react-icons/fa";
+import { FaCheckCircle, FaTimesCircle, FaTrashAlt } from "react-icons/fa";
 import { FcProcess } from "react-icons/fc";
-import { CSSTransition, TransitionGroup } from "react-transition-group";
 
 export default function OrderTable() {
   const [orders, setOrders] = useState([]);
@@ -17,9 +11,12 @@ export default function OrderTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingOrderId, setLoadingOrderId] = useState(null);
   const [messagePopup, setMessagePopup] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const fetchOrders = async (page) => {
     try {
@@ -28,12 +25,13 @@ export default function OrderTable() {
         params: {
           page,
           pageSize: ordersPerPage,
-          statusFilter, // Include status filter
-          searchQuery, // Include search query
+          statusFilter,
+          searchQuery,
         },
       });
       setOrders(response.data.orders);
       setTotalPages(response.data.totalPages);
+      setTotalOrders(response.data.totalOrders ?? 0);
     } catch (error) {
       console.error("Error fetching orders:", error);
     } finally {
@@ -45,15 +43,164 @@ export default function OrderTable() {
     fetchOrders(currentPage);
   }, [currentPage, statusFilter, searchQuery]);
 
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [currentPage, statusFilter, searchQuery]);
+
+  useEffect(() => {
+    if (!messagePopup) return;
+    const t = setTimeout(() => setMessagePopup(null), 4000);
+    return () => clearTimeout(t);
+  }, [messagePopup]);
+
+  const allOnPageSelected =
+    orders.length > 0 && orders.every((o) => selectedIds.has(o.id));
+  const selectedOnPageCount = orders.filter((o) => selectedIds.has(o.id))
+    .length;
+
+  const toggleSelectAllOnPage = () => {
+    if (allOnPageSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(orders.map((o) => o.id)));
+    }
+  };
+
+  const toggleOne = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectedIdList = () => [...selectedIds];
+
+  const postBulk = async (body) => {
+    setBulkLoading(true);
+    try {
+      const { data } = await axios.post("/api/bulk-orders", body);
+      setSelectedIds(new Set());
+      const n = data.updated ?? data.deleted ?? 0;
+      setMessagePopup({
+        type: "success",
+        message:
+          body.action === "delete"
+            ? `Deleted ${n} order(s).`
+            : `Updated ${n} order(s).`,
+      });
+      await fetchOrders(currentPage);
+    } catch (error) {
+      console.error(error);
+      setMessagePopup({
+        type: "error",
+        message:
+          error.response?.data?.error || "Bulk action failed. Try again.",
+      });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const bulkCompleteSelected = () => {
+    const ids = selectedIdList();
+    if (ids.length === 0) return;
+    if (
+      !window.confirm(`Mark ${ids.length} selected order(s) as completed?`)
+    )
+      return;
+    postBulk({
+      action: "setStatus",
+      scope: "page",
+      orderIds: ids,
+      status: "completed",
+    });
+  };
+
+  const bulkProcessingSelected = () => {
+    const ids = selectedIdList();
+    if (ids.length === 0) return;
+    if (
+      !window.confirm(`Mark ${ids.length} selected order(s) as processing?`)
+    )
+      return;
+    postBulk({
+      action: "setStatus",
+      scope: "page",
+      orderIds: ids,
+      status: "processing",
+    });
+  };
+
+  const bulkCancelSelected = () => {
+    const ids = selectedIdList();
+    if (ids.length === 0) return;
+    if (!window.confirm(`Cancel ${ids.length} selected order(s)?`)) return;
+    postBulk({
+      action: "setStatus",
+      scope: "page",
+      orderIds: ids,
+      status: "cancelled",
+    });
+  };
+
+  const bulkDeleteSelected = () => {
+    const ids = selectedIdList();
+    if (ids.length === 0) return;
+    if (
+      !window.confirm(
+        `Permanently delete ${ids.length} selected order(s)? This cannot be undone.`
+      )
+    )
+      return;
+    postBulk({
+      action: "delete",
+      scope: "page",
+      orderIds: ids,
+    });
+  };
+
+  const bulkAllMatching = (action, status) => {
+    const label =
+      action === "delete"
+        ? "DELETE ALL orders matching the current filters"
+        : `set ALL matching orders to "${status}"`;
+    if (
+      !window.confirm(
+        `${label}?\n\nThis affects ${totalOrders} order(s). This cannot be undone for delete.`
+      )
+    )
+      return;
+    if (action === "delete") {
+      const second = window.prompt(
+        'Type DELETE in capitals to confirm bulk delete of all matching orders:'
+      );
+      if (second !== "DELETE") {
+        setMessagePopup({ type: "error", message: "Bulk delete cancelled." });
+        return;
+      }
+    }
+    const body =
+      action === "delete"
+        ? { action: "delete", scope: "filter", statusFilter, searchQuery }
+        : {
+            action: "setStatus",
+            scope: "filter",
+            statusFilter,
+            searchQuery,
+            status,
+          };
+    postBulk(body);
+  };
+
   const updateOrderStatus = async (orderId, status) => {
     setLoadingOrderId(orderId);
     try {
-      const response = await axios.post("/api/update-order-status", {
+      await axios.post("/api/update-order-status", {
         orderId,
         status,
       });
-
-      const updatedOrder = response.data;
 
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
@@ -78,45 +225,38 @@ export default function OrderTable() {
     }
   };
 
-  // delete funtion
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?"))
-      return;
+    if (!window.confirm("Are you sure you want to delete this order?")) return;
 
     try {
       await axios.delete("/api/delete-order", { data: { id } });
-      fetchOrders(); // Refresh list
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      fetchOrders(currentPage);
     } catch (err) {
       console.error("Delete failed:", err);
     }
   };
 
-  const filteredOrders = orders
-    .filter((order) =>
-      statusFilter === "all" ? true : order?.status?.status === statusFilter
-    )
-    .filter(
-      (order) =>
-        searchQuery === ""
-          ? true
-          : order?.customer?.name
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase()) ||
-            order?.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            order?.customer?.contact?.includes(searchQuery) // Search by contact number
-    );
-
   const indexOfFirstOrder = (currentPage - 1) * ordersPerPage;
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <label className="block text-gray-700">Filter by Status:</label>
+    <div className="min-w-0">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-4">
+        <div className="min-w-0">
+          <label className="block text-sm font-medium text-slate-700">
+            Filter by status
+          </label>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="mt-1 p-2 border border-gray-300 rounded"
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="mt-1 w-full sm:w-auto min-w-[12rem] p-2 border border-slate-300 rounded-md bg-white text-slate-900"
           >
             <option value="all">All</option>
             <option value="received">Received</option>
@@ -125,87 +265,176 @@ export default function OrderTable() {
             <option value="cancelled">Cancelled</option>
           </select>
         </div>
-        <div>
+        <div className="w-full lg:max-w-md min-w-0">
+          <label className="block text-sm font-medium text-slate-700 sr-only">
+            Search
+          </label>
           <input
             type="text"
-            placeholder="Search by customer, service, or contact number"
+            placeholder="Search by customer, service, or contact"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="p-2 border border-gray-300 rounded"
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full p-2 border border-slate-300 rounded-md bg-white text-slate-900"
           />
         </div>
       </div>
 
-      {loading ? (
-        <div className="animate-pulse">
-          <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-            <thead className="bg-blue-600 text-white">
-              <tr>
-                <th className="py-4 px-6 font-semibold uppercase text-sm">
-                  <div className="bg-gray-300 h-6 rounded w-24"></div>
-                </th>
-                <th className="py-4 px-6 font-semibold uppercase text-sm">
-                  <div className="bg-gray-300 h-6 rounded w-48"></div>
-                </th>
-                <th className="py-4 px-6 font-semibold uppercase text-sm">
-                  <div className="bg-gray-300 h-6 rounded w-36"></div>
-                </th>
-                <th className="py-4 px-6 font-semibold uppercase text-sm">
-                  <div className="bg-gray-300 h-6 rounded w-52"></div>
-                </th>
-                <th className="py-4 px-6 font-semibold uppercase text-sm">
-                  <div className="bg-gray-300 h-6 rounded w-36"></div>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: ordersPerPage }).map((_, index) => (
-                <tr key={index} className="border-b last:border-none">
-                  <td className="py-4 px-6">
-                    <div className="bg-gray-200 h-4 rounded w-12"></div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="bg-gray-200 h-4 rounded w-48"></div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="bg-gray-200 h-4 rounded w-36"></div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="bg-gray-200 h-4 rounded w-52"></div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="bg-gray-200 h-4 rounded w-36"></div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {!loading && orders.length > 0 && (
+        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="text-sm text-slate-600">
+            <span className="font-medium text-slate-800">
+              {selectedOnPageCount}
+            </span>{" "}
+            selected on this page ·{" "}
+            <span className="font-medium text-slate-800">{totalOrders}</span>{" "}
+            match filters
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={bulkLoading || selectedIds.size === 0}
+              onClick={bulkCompleteSelected}
+              className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-800 disabled:opacity-40"
+            >
+              Complete selected
+            </button>
+            <button
+              type="button"
+              disabled={bulkLoading || selectedIds.size === 0}
+              onClick={bulkProcessingSelected}
+              className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-40"
+            >
+              Processing selected
+            </button>
+            <button
+              type="button"
+              disabled={bulkLoading || selectedIds.size === 0}
+              onClick={bulkCancelSelected}
+              className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700 disabled:opacity-40"
+            >
+              Cancel selected
+            </button>
+            <button
+              type="button"
+              disabled={bulkLoading || selectedIds.size === 0}
+              onClick={bulkDeleteSelected}
+              className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-40"
+            >
+              Delete selected
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-3 sm:border-t-0 sm:border-l sm:pl-4 sm:pt-0">
+            <span className="w-full text-xs font-medium uppercase tracking-wide text-slate-500 sm:w-auto sm:mr-2">
+              All matching filters
+            </span>
+            <button
+              type="button"
+              disabled={bulkLoading || totalOrders === 0}
+              onClick={() => bulkAllMatching("setStatus", "completed")}
+              className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-900 disabled:opacity-40"
+            >
+              Mark all completed
+            </button>
+            <button
+              type="button"
+              disabled={bulkLoading || totalOrders === 0}
+              onClick={() => bulkAllMatching("setStatus", "processing")}
+              className="rounded-lg bg-slate-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700 disabled:opacity-40"
+            >
+              Mark all processing
+            </button>
+            <button
+              type="button"
+              disabled={bulkLoading || totalOrders === 0}
+              onClick={() => bulkAllMatching("delete")}
+              className="rounded-lg border border-red-400 bg-white px-3 py-1.5 text-xs font-medium text-red-800 hover:bg-red-50 disabled:opacity-40"
+            >
+              Delete all matching
+            </button>
+          </div>
         </div>
-      ) : (
-        <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-          <thead className="bg-blue-600 text-white">
+      )}
+
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+        <table className="w-full min-w-[1020px] text-sm text-left">
+          <thead className="bg-slate-800 text-white">
             <tr>
-              <th className="py-4 px-6 font-semibold text-left">#</th>
-              <th className="py-4 px-6 font-semibold text-left">Customer</th>
-              <th className="py-4 px-6 font-semibold text-left">Service</th>
-              <th className="py-4 px-6 font-semibold text-left">Status</th>
-              <th className="py-4 px-6 font-semibold text-left">Subtotal</th>
-              <th className="py-4 px-6 font-semibold text-left">
-                Delivery Charge
+              <th className="py-3 px-2 w-10">
+                <input
+                  type="checkbox"
+                  checked={allOnPageSelected}
+                  onChange={toggleSelectAllOnPage}
+                  disabled={loading || orders.length === 0}
+                  className="h-4 w-4 rounded border-slate-500"
+                  title="Select all on this page"
+                />
               </th>
-              <th className="py-4 px-6 font-semibold text-left">Discount</th>
-              <th className="py-4 px-6 font-semibold text-left">Create At</th>
-              <th className="py-4 px-6 font-semibold text-left">Actions</th>
+              <th className="py-3 px-3 font-medium whitespace-nowrap">#</th>
+              <th className="py-3 px-3 font-medium">Customer</th>
+              <th className="py-3 px-3 font-medium">Service</th>
+              <th className="py-3 px-3 font-medium whitespace-nowrap">
+                Status
+              </th>
+              <th className="py-3 px-3 font-medium whitespace-nowrap text-right">
+                Subtotal
+              </th>
+              <th className="py-3 px-3 font-medium whitespace-nowrap text-right">
+                Delivery
+              </th>
+              <th className="py-3 px-3 font-medium whitespace-nowrap text-right">
+                Discount
+              </th>
+              <th className="py-3 px-3 font-medium whitespace-nowrap">Date</th>
+              <th className="py-3 px-3 font-medium text-right whitespace-nowrap">
+                Actions
+              </th>
             </tr>
           </thead>
-          <TransitionGroup component="tbody">
-            {filteredOrders.map((order, index) => (
-              <CSSTransition key={order.id} timeout={300} classNames="fade">
-                <tr className="border-b">
-                  <td className="py-4 px-6">{indexOfFirstOrder + index + 1}</td>
-                  <td className="py-4 px-6">{order?.customer.name}</td>
-                  <td className="py-4 px-6">{order?.service}</td>
-                  <td className="py-4 px-6">
+          <tbody>
+            {loading ? (
+              [...Array(ordersPerPage)].map((_, idx) => (
+                <tr key={idx} className="border-b border-slate-100">
+                  <td colSpan={10} className="p-3">
+                    <div className="h-4 bg-slate-200 rounded animate-pulse" />
+                  </td>
+                </tr>
+              ))
+            ) : orders.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={10}
+                  className="py-10 px-4 text-center text-slate-500"
+                >
+                  No orders match your filters.
+                </td>
+              </tr>
+            ) : (
+              orders.map((order, index) => (
+                <tr
+                  key={order.id}
+                  className="border-b border-slate-100 odd:bg-slate-50/80"
+                >
+                  <td className="py-3 px-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(order.id)}
+                      onChange={() => toggleOne(order.id)}
+                      className="h-4 w-4 rounded border-slate-400"
+                    />
+                  </td>
+                  <td className="py-3 px-3 text-slate-700 whitespace-nowrap">
+                    {indexOfFirstOrder + index + 1}
+                  </td>
+                  <td className="py-3 px-3 text-slate-800 font-medium max-w-[140px] break-words">
+                    {order?.customer.name}
+                  </td>
+                  <td className="py-3 px-3 text-slate-700 max-w-[120px] break-words">
+                    {order?.service}
+                  </td>
+                  <td className="py-3 px-3">
                     {order?.status?.status === "received" && (
                       <span className="text-blue-600 font-semibold">
                         Received
@@ -227,82 +456,104 @@ export default function OrderTable() {
                       </span>
                     )}
                   </td>
-                  <td className="py-4 px-6">{order.subtotal}</td>
-                  <td className="py-4 px-6">{order.deliveryCharge}</td>
-                  <td className="py-4 px-6">{order.discount || "-"}</td>
-                  <td className="py-4 px-6">
+                  <td className="py-3 px-3 text-right text-slate-800 whitespace-nowrap">
+                    {order.subtotal ?? "—"}
+                  </td>
+                  <td className="py-3 px-3 text-right text-slate-800 whitespace-nowrap">
+                    {order.deliveryCharge}
+                  </td>
+                  <td className="py-3 px-3 text-right text-slate-800 whitespace-nowrap">
+                    {order.discount ?? "—"}
+                  </td>
+                  <td className="py-3 px-3 text-slate-700 whitespace-nowrap">
                     {new Date(order.createdAt).toLocaleDateString("en-GB")}
                   </td>
-                  <td className="py-4 px-6 flex space-x-2">
-                    <button
-                      onClick={() => updateOrderStatus(order.id, "completed")}
-                      disabled={loadingOrderId === order.id}
-                      className={`${
-                        loadingOrderId === order.id ? "opacity-50" : ""
-                      }`}
-                    >
-                      <FaCheckCircle className="text-green-600 hover:text-green-700" />
-                    </button>
-                    <button
-                      onClick={() => updateOrderStatus(order.id, "cancelled")}
-                      disabled={loadingOrderId === order.id}
-                      className={`${
-                        loadingOrderId === order.id ? "opacity-50" : ""
-                      }`}
-                    >
-                      <FaTimesCircle className="text-red-600 hover:text-red-700" />
-                    </button>
-                    <button
-                      onClick={() => updateOrderStatus(order.id, "processing")}
-                      disabled={loadingOrderId === order.id}
-                      className={`${
-                        loadingOrderId === order.id ? "opacity-50" : ""
-                      }`}
-                    >
-                      <FcProcess />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(order.id)}
-                      disabled={loadingOrderId === order.id}
-                      className={`${
-                        loadingOrderId === order.id ? "opacity-50" : ""
-                      }`}
-                    >
-                      <FaTrashAlt className="text-gray-600 hover:text-gray-700" />
-                    </button>
+                  <td className="py-3 px-3">
+                    <div className="flex flex-wrap justify-end gap-1">
+                      <button
+                        type="button"
+                        title="Mark completed"
+                        onClick={() =>
+                          updateOrderStatus(order.id, "completed")
+                        }
+                        disabled={
+                          loadingOrderId === order.id || bulkLoading
+                        }
+                        className={`p-1.5 rounded-md hover:bg-slate-100 ${
+                          loadingOrderId === order.id ? "opacity-50" : ""
+                        }`}
+                      >
+                        <FaCheckCircle className="text-green-600 hover:text-green-700 text-lg" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Cancel order"
+                        onClick={() =>
+                          updateOrderStatus(order.id, "cancelled")
+                        }
+                        disabled={
+                          loadingOrderId === order.id || bulkLoading
+                        }
+                        className={`p-1.5 rounded-md hover:bg-slate-100 ${
+                          loadingOrderId === order.id ? "opacity-50" : ""
+                        }`}
+                      >
+                        <FaTimesCircle className="text-red-600 hover:text-red-700 text-lg" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Mark processing"
+                        onClick={() =>
+                          updateOrderStatus(order.id, "processing")
+                        }
+                        disabled={
+                          loadingOrderId === order.id || bulkLoading
+                        }
+                        className={`p-1.5 rounded-md hover:bg-slate-100 ${
+                          loadingOrderId === order.id ? "opacity-50" : ""
+                        }`}
+                      >
+                        <FcProcess className="text-xl" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Delete order"
+                        onClick={() => handleDelete(order.id)}
+                        disabled={
+                          loadingOrderId === order.id || bulkLoading
+                        }
+                        className={`p-1.5 rounded-md hover:bg-slate-100 ${
+                          loadingOrderId === order.id ? "opacity-50" : ""
+                        }`}
+                      >
+                        <FaTrashAlt className="text-slate-600 hover:text-slate-800 text-lg" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              </CSSTransition>
-            ))}
-          </TransitionGroup>
+              ))
+            )}
+          </tbody>
         </table>
-      )}
+      </div>
 
-      <div className="flex justify-center mt-4">
+      <div className="flex flex-wrap justify-center items-center gap-2 mt-4">
         <button
-          onClick={() => setCurrentPage(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="mr-2 p-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+          type="button"
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          disabled={loading || currentPage === 1}
+          className="px-3 py-1.5 text-sm rounded-md bg-slate-200 hover:bg-slate-300 disabled:opacity-50"
         >
           Previous
         </button>
-        {Array.from({ length: totalPages }, (_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentPage(index + 1)}
-            className={`mr-2 p-2 rounded ${
-              currentPage === index + 1
-                ? "bg-blue-500 text-white"
-                : "bg-gray-200 hover:bg-gray-300"
-            }`}
-          >
-            {index + 1}
-          </button>
-        ))}
+        <span className="text-sm text-slate-600 px-2">
+          Page {currentPage} of {totalPages}
+        </span>
         <button
-          onClick={() => setCurrentPage(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+          type="button"
+          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          disabled={loading || currentPage === totalPages}
+          className="px-3 py-1.5 text-sm rounded-md bg-slate-200 hover:bg-slate-300 disabled:opacity-50"
         >
           Next
         </button>
@@ -310,10 +561,10 @@ export default function OrderTable() {
 
       {messagePopup && (
         <div
-          className={`fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 p-4 rounded ${
+          className={`fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium ${
             messagePopup.type === "success"
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
+              ? "bg-emerald-600 text-white"
+              : "bg-red-600 text-white"
           }`}
         >
           {messagePopup.message}

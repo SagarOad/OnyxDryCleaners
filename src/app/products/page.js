@@ -1,14 +1,14 @@
-import Sidebar from "../../components/Sidebar";
+import AdminShell from "@/components/AdminShell";
 import ProductsTableServer from "@/components/ProductsTableServer";
 
 export default function Products() {
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <div className="flex-1 p-6 bg-white">
-        <h1 className="text-2xl font-bold mb-4">Products</h1>
-        <ProductsTableServer />
-      </div>
-    </div>
+    <AdminShell title="Products & pricing">
+      <p className="text-slate-600 text-sm mb-4 max-w-2xl">
+        Update standard and urgent rates anytime. Renaming changes the display
+        name only; the internal code stays the same for existing orders.
+      </p>
+      <ProductsTableServer />
+    </AdminShell>
   );
 }
