@@ -118,7 +118,7 @@ export default function CustomerTableClient() {
         />
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="touch-pan-x overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
         {loading ? (
           <div className="animate-pulse p-4 min-w-[640px]">
             <div className="h-10 bg-slate-200 rounded mb-2" />

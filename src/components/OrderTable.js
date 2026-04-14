@@ -325,8 +325,8 @@ export default function OrderTable() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full min-w-[1020px] text-sm text-left">
+      <div className="-mx-1 touch-pan-x overflow-x-auto rounded-lg border border-slate-200 bg-white px-1 shadow-sm sm:mx-0 sm:px-0">
+        <table className="w-full min-w-[720px] text-left text-sm md:min-w-[900px] lg:min-w-[1020px]">
           <thead className="bg-slate-800 text-white">
             <tr>
               <th className="py-3 px-2 w-10">

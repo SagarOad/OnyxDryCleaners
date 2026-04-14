@@ -370,7 +370,7 @@ export default function AddOrderClient({ initialData }) {
   if (!hasMounted) {
     return (
       <div className="grid min-h-[320px] grid-cols-12 gap-4">
-        <div className="col-span-12 md:col-span-6">
+        <div className="col-span-12 xl:col-span-6">
           <div className="animate-pulse space-y-4 rounded-xl border border-slate-200 bg-white p-6">
             <div className="h-8 w-1/3 rounded bg-slate-200" />
             <div className="h-10 rounded bg-slate-100" />
@@ -378,7 +378,7 @@ export default function AddOrderClient({ initialData }) {
             <div className="h-10 rounded bg-slate-100" />
           </div>
         </div>
-        <div className="col-span-12 md:col-span-6">
+        <div className="col-span-12 xl:col-span-6">
           <div className="h-64 animate-pulse rounded-xl border border-slate-200 bg-slate-100" />
         </div>
       </div>
@@ -410,10 +410,10 @@ export default function AddOrderClient({ initialData }) {
         </div>
       )}
 
-      <div className="relative grid min-w-0 w-full grid-cols-12 gap-4">
-        <div className="col-span-12 min-w-0 md:col-span-6">
+      <div className="relative grid min-w-0 w-full grid-cols-12 gap-4 xl:gap-6">
+        <div className="col-span-12 min-w-0 xl:col-span-6">
           <div className="flex justify-start">
-            <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:mr-4 md:p-6">
+            <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-6 xl:mr-4">
               <h2 className="mb-1 text-xl font-semibold tracking-tight text-slate-900">
                 New order
               </h2>
@@ -785,7 +785,7 @@ export default function AddOrderClient({ initialData }) {
               </div>
 
               {/* Submit Button */}
-              <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
                 {isEditing ? (
                   <input
                     type="number"
@@ -819,7 +819,7 @@ export default function AddOrderClient({ initialData }) {
                       ? "Fill all required fields to submit"
                       : undefined
                   }
-                  className="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-800 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   {loading ? (
                     <>
@@ -834,7 +834,7 @@ export default function AddOrderClient({ initialData }) {
             </div>
           </div>
         </div>
-        <div className="col-span-12 min-w-0 md:col-span-6">
+        <div className="col-span-12 min-w-0 xl:col-span-6">
           <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
             <h3 className="mb-1 text-lg font-semibold text-slate-900 md:text-xl">
               Selected products
@@ -863,7 +863,7 @@ export default function AddOrderClient({ initialData }) {
                   No products selected yet.
                 </p>
                 <p className="mt-1 text-sm text-slate-500 md:mt-2 md:text-base">
-                  Use line items on the left to add products.
+                  Use the line items field in the order form to add products.
                 </p>
               </div>
             ) : (

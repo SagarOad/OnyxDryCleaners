@@ -74,7 +74,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="relative hidden h-screen w-64 shrink-0 flex-col border-r border-slate-800/80 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white shadow-xl md:flex">
+      <aside className="relative hidden h-dvh max-h-dvh min-h-0 w-64 shrink-0 flex-col border-r border-slate-800/80 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white shadow-xl md:flex">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/40 to-transparent" />
         <div className="shrink-0 px-5 pt-8 pb-5">
           <div className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800/90 bg-slate-950/95 backdrop-blur-md md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800/90 bg-slate-950/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md md:hidden">
         <div className="flex max-w-full gap-1 overflow-x-auto px-2 py-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {scopedNavItems.map((item) => {
             const active = isActive(item.href);

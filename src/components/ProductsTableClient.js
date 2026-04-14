@@ -152,7 +152,7 @@ export default function ProductsTableClient() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="touch-pan-x overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[800px] text-sm text-left">
           <thead className="bg-slate-800 text-white">
             <tr>
