@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "../../../../lib/prisma";
+import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
 
 function parseDayStart(ymd) {
   const [y, m, d] = ymd.split("-").map((x) => parseInt(x, 10));
@@ -84,6 +85,11 @@ function buildCsv(summary, monthly, from, to) {
 
 export async function GET(request) {
   try {
+    const ctx = await getTenantContext();
+    if (ctx.error) return ctx.error;
+    const businessErr = requireBusiness(ctx);
+    if (businessErr) return businessErr;
+
     const { searchParams } = new URL(request.url);
     const format = (searchParams.get("format") || "json").toLowerCase();
     const from = searchParams.get("from");
@@ -129,6 +135,7 @@ export async function GET(request) {
         FROM "Order" o
         INNER JOIN "OrderStatus" s ON s.id = o."statusId"
         WHERE s.status <> 'cancelled'
+          AND o."businessId" = ${ctx.businessId}
           AND o.created_at >= ${fromDate}
           AND o.created_at <= ${toDate}
       )
@@ -162,6 +169,7 @@ export async function GET(request) {
           FROM "Order" o
           INNER JOIN "OrderStatus" s ON s.id = o."statusId"
           WHERE s.status <> 'cancelled'
+            AND o."businessId" = ${ctx.businessId}
             AND o.created_at >= ${fromDate}
             AND o.created_at <= ${toDate}
         )

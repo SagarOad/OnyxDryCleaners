@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false });
+const ALLOWED_ROLES = new Set(["admin", "business_admin", "superadmin"]);
 
 const defaultFinance = {
   revenueThisMonth: 0,
@@ -138,7 +139,7 @@ export default function Home() {
   useEffect(() => {
     if (
       status === "unauthenticated" ||
-      (session && session.user.role !== "admin")
+      (session && !ALLOWED_ROLES.has(session.user.role))
     ) {
       router.push("/login");
     }
@@ -252,7 +253,7 @@ export default function Home() {
     return <DashboardSkeleton />;
   }
 
-  if (!session || session.user.role !== "admin") {
+  if (!session || !ALLOWED_ROLES.has(session.user.role)) {
     return null;
   }
 

@@ -13,6 +13,7 @@ import {
   UserPlus,
   Package,
   PackagePlus,
+  Shield,
   LogOut,
 } from "lucide-react";
 
@@ -27,6 +28,11 @@ const navItems = [
   { href: "/add-existing-customer", label: "Add customer", icon: UserPlus },
   { href: "/finance", label: "Finance", icon: LineChart },
   { href: "/ledger", label: "Ledger", icon: BookOpen },
+];
+const superAdminNavItems = [
+  { href: "/superadmin", label: "Overview", icon: Shield },
+  { href: "/superadmin/businesses", label: "Businesses", icon: Users },
+  { href: "/superadmin/billing", label: "Billing", icon: LineChart },
 ];
 
 function NavLink({ href, label, icon: Icon, active }) {
@@ -56,6 +62,8 @@ function NavLink({ href, label, icon: Icon, active }) {
 export default function Sidebar() {
   const pathname = usePathname() || "/";
   const { data: session } = useSession();
+  const isSuperAdmin = session?.user?.role === "superadmin";
+  const scopedNavItems = isSuperAdmin ? superAdminNavItems : navItems;
 
   const isActive = (href) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -86,7 +94,7 @@ export default function Sidebar() {
           className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-3 pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           aria-label="Main navigation"
         >
-          {navItems.map((item) => (
+          {scopedNavItems.map((item) => (
             <NavLink
               key={item.href}
               {...item}
@@ -120,7 +128,7 @@ export default function Sidebar() {
 
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800/90 bg-slate-950/95 backdrop-blur-md md:hidden">
         <div className="flex max-w-full gap-1 overflow-x-auto px-2 py-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          {navItems.map((item) => {
+          {scopedNavItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;
             return (

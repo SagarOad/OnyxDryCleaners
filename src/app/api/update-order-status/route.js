@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../../../lib/prisma";
+import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
 
 export async function POST(request) {
   try {
+    const ctx = await getTenantContext();
+    if (ctx.error) return ctx.error;
+    const businessErr = requireBusiness(ctx);
+    if (businessErr) return businessErr;
+
     const { orderId, status } = await request.json();
 
     // Find the corresponding status ID
@@ -20,9 +24,15 @@ export async function POST(request) {
     }
 
     // Update the order's status
-    const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
+    const updatedResult = await prisma.order.updateMany({
+      where: { id: orderId, businessId: ctx.businessId },
       data: { statusId: statusRecord.id },
+    });
+    if (updatedResult.count === 0) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+    const updatedOrder = await prisma.order.findFirst({
+      where: { id: orderId, businessId: ctx.businessId },
     });
 
     return NextResponse.json(updatedOrder);

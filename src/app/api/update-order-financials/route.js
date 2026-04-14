@@ -4,12 +4,18 @@ import {
   orderLineRevenue,
   orderNetProfitAfterOutsource,
 } from "@/lib/orderMoney";
+import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
 
 /**
  * Update editable financial / text fields on an order. No schema changes.
  */
 export async function PUT(request) {
   try {
+    const ctx = await getTenantContext();
+    if (ctx.error) return ctx.error;
+    const businessErr = requireBusiness(ctx);
+    if (businessErr) return businessErr;
+
     const body = await request.json();
     const {
       id,
@@ -83,9 +89,15 @@ export async function PUT(request) {
       );
     }
 
-    const updated = await prisma.order.update({
-      where: { id },
+    const updatedResult = await prisma.order.updateMany({
+      where: { id, businessId: ctx.businessId },
       data,
+    });
+    if (updatedResult.count === 0) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+    const updated = await prisma.order.findFirst({
+      where: { id, businessId: ctx.businessId },
       include: {
         customer: { select: { name: true, contact: true } },
         status: true,

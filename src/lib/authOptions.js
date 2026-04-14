@@ -71,23 +71,43 @@ export const authOptions = {
           const key = rateKey(loginId);
           if (isRateLimited(key)) return null;
 
-          const user = await prisma.admin.findUnique({
-            where: { email: loginId },
+          const businessUser = await prisma.businessUser.findFirst({
+            where: {
+              username: loginId,
+              isActive: true,
+            },
+            include: {
+              business: {
+                select: { id: true, status: true, name: true },
+              },
+            },
           });
+          const legacyAdmin = businessUser
+            ? null
+            : await prisma.admin.findUnique({
+                where: { email: loginId },
+              });
 
-          const hash = user?.password ?? INVALID_USER_PASSWORD_HASH;
+          const authUser = businessUser || legacyAdmin;
+          const hash = authUser?.password ?? INVALID_USER_PASSWORD_HASH;
           const passwordOk = bcrypt.compareSync(password, hash);
 
-          if (!user || !passwordOk) {
+          const businessInactive =
+            businessUser?.business?.status &&
+            businessUser.business.status !== "active";
+          if (!authUser || !passwordOk || businessInactive) {
             recordFailure(key);
             return null;
           }
 
           clearFailures(key);
           return {
-            id: user.id,
-            email: user.email,
-            role: "admin",
+            id: authUser.id,
+            email: businessUser?.email || legacyAdmin?.email || loginId,
+            username: businessUser?.username || legacyAdmin?.email || loginId,
+            role: businessUser?.role || legacyAdmin?.role || "business_admin",
+            businessId: businessUser?.businessId || null,
+            businessName: businessUser?.business?.name || null,
           };
         } catch (e) {
           console.error("Credentials authorize error:", e);
@@ -112,6 +132,9 @@ export const authOptions = {
         token.id = user.id;
         token.role = user.role;
         token.email = user.email;
+        token.username = user.username;
+        token.businessId = user.businessId || null;
+        token.businessName = user.businessName || null;
       }
       return token;
     },
@@ -120,6 +143,9 @@ export const authOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
         if (token.email) session.user.email = token.email;
+        if (token.username) session.user.username = token.username;
+        session.user.businessId = token.businessId || null;
+        session.user.businessName = token.businessName || null;
       }
       return session;
     },

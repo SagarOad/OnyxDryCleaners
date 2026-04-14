@@ -8,9 +8,15 @@ import {
   orderVolumeExcludingCancelled,
   pctChange,
 } from "@/lib/finance";
+import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
 
 export async function GET() {
   try {
+    const ctx = await getTenantContext();
+    if (ctx.error) return ctx.error;
+    const businessErr = requireBusiness(ctx);
+    if (businessErr) return businessErr;
+
     const now = new Date();
 
     const thisMonthStart = startOfMonth(now);
@@ -37,26 +43,36 @@ export async function GET() {
       ytdFin,
       rollingYearFin,
     ] = await Promise.all([
-      prisma.customer.count(),
-      prisma.order.count(),
+      prisma.customer.count({ where: { businessId: ctx.businessId } }),
+      prisma.order.count({ where: { businessId: ctx.businessId } }),
       prisma.order.count({
-        where: { status: { status: "received" } },
+        where: { status: { status: "received" }, businessId: ctx.businessId },
       }),
       prisma.order.count({
-        where: { status: { status: "processing" } },
+        where: { status: { status: "processing" }, businessId: ctx.businessId },
       }),
       prisma.order.count({
-        where: { status: { status: "completed" } },
+        where: { status: { status: "completed" }, businessId: ctx.businessId },
       }),
       prisma.order.count({
-        where: { status: { status: "cancelled" } },
+        where: { status: { status: "cancelled" }, businessId: ctx.businessId },
       }),
-      orderVolumeExcludingCancelled(prisma, thisMonthStart, thisMonthEnd),
-      orderVolumeExcludingCancelled(prisma, lastMonthStart, lastMonthEnd),
-      completedRevenueAndCount(prisma, thisMonthStart, thisMonthEnd),
-      completedRevenueAndCount(prisma, lastMonthStart, lastMonthEnd),
-      completedRevenueAndCount(prisma, yearStart, now),
-      completedRevenueAndCount(prisma, twelveMonthsAgo, now),
+      orderVolumeExcludingCancelled(
+        prisma,
+        thisMonthStart,
+        thisMonthEnd,
+        ctx.businessId
+      ),
+      orderVolumeExcludingCancelled(
+        prisma,
+        lastMonthStart,
+        lastMonthEnd,
+        ctx.businessId
+      ),
+      completedRevenueAndCount(prisma, thisMonthStart, thisMonthEnd, ctx.businessId),
+      completedRevenueAndCount(prisma, lastMonthStart, lastMonthEnd, ctx.businessId),
+      completedRevenueAndCount(prisma, yearStart, now, ctx.businessId),
+      completedRevenueAndCount(prisma, twelveMonthsAgo, now, ctx.businessId),
     ]);
 
     const orderGrowthPercent = pctChange(thisMonthVolume, lastMonthVolume);
@@ -79,7 +95,8 @@ export async function GET() {
         const { revenue, count } = await completedRevenueAndCount(
           prisma,
           ms,
-          me
+          me,
+          ctx.businessId
         );
         return {
           label: ref.toLocaleString("en-GB", {

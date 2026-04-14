@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import prisma from "../../../../lib/prisma";
 import { buildOrderListWhere } from "@/lib/orderWhere";
+import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
 
 export async function GET(request) {
   try {
+    const ctx = await getTenantContext();
+    if (ctx.error) return ctx.error;
+    const businessErr = requireBusiness(ctx);
+    if (businessErr) return businessErr;
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page")) || 1;
     const pageSize = parseInt(searchParams.get("pageSize")) || 10;
@@ -12,7 +18,11 @@ export async function GET(request) {
 
     const skip = (page - 1) * pageSize;
 
-    const where = buildOrderListWhere(statusFilter, searchQuery);
+    const where = buildOrderListWhere(
+      statusFilter,
+      searchQuery,
+      ctx.businessId
+    );
 
     const [orders, totalOrders] = await Promise.all([
       prisma.order.findMany({

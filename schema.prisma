@@ -28,13 +28,18 @@ model Post {
 }
 
 model Customer {
-  id         String  @id @default(cuid())
-  name       String  @unique
+  id         String    @id @default(cuid())
+  name       String
   contact    String
   address    String
   service    String
   existingId Int?
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
   orders     Order[]
+
+  @@index([businessId])
+  @@unique([businessId, name])
 }
 
 model OrderLiveStatus {
@@ -46,6 +51,7 @@ model OrderLiveStatus {
 model Order {
   id                   String              @id @default(cuid())
   customerId           String
+  businessId           String?
   service              String
   deliveryCharge       Float
   discount             Float
@@ -58,40 +64,57 @@ model Order {
   outsourcingCost      Float?
   profit               Float?
   customer             Customer            @relation(fields: [customerId], references: [id])
+  business             Business?           @relation(fields: [businessId], references: [id])
   liveStatus           OrderLiveStatus?    @relation(fields: [liveStatusId], references: [id])
   outsourcingCompany   OutsourcingCompany? @relation(fields: [outsourcingCompanyId], references: [id])
   status               OrderStatus         @relation(fields: [statusId], references: [id])
   items                OrderItem[]
+
+  @@index([businessId])
 }
 
 model OrderItem {
-  id        String @id @default(cuid())
-  orderId   String
-  product   String
-  quantity  Int
-  unitPrice Float
-  amount    Float
-  order     Order  @relation(fields: [orderId], references: [id])
+  id         String    @id @default(cuid())
+  orderId    String
+  businessId String?
+  product    String
+  quantity   Int
+  unitPrice  Float
+  amount     Float
+  business   Business? @relation(fields: [businessId], references: [id])
+  order      Order     @relation(fields: [orderId], references: [id])
+
+  @@index([businessId])
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   label       String
-  value       String   @unique
+  value       String
+  businessId  String?
   price       Float
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  urgentPrice Float    @default(0)
+  urgentPrice Float     @default(0)
+  business    Business? @relation(fields: [businessId], references: [id])
+
+  @@index([businessId])
+  @@unique([businessId, value])
 }
 
 model ExistingCustomers {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  address   String
-  contact   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  service   String
+  id         Int       @id @default(autoincrement())
+  name       String
+  businessId String?
+  address    String
+  contact    String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  service    String
+  business   Business? @relation(fields: [businessId], references: [id])
+
+  @@index([businessId])
+  @@unique([businessId, name])
 }
 
 model OrderStatus {
@@ -101,11 +124,16 @@ model OrderStatus {
 }
 
 model OutsourcingCompany {
-  id      String  @id @default(cuid())
-  name    String  @unique
-  contact String
-  address String
-  orders  Order[]
+  id         String    @id @default(cuid())
+  name       String
+  businessId String?
+  contact    String
+  address    String
+  business   Business? @relation(fields: [businessId], references: [id])
+  orders     Order[]
+
+  @@index([businessId])
+  @@unique([businessId, name])
 }
 
 model Admin {
@@ -115,4 +143,59 @@ model Admin {
   role      String   @default("admin")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model Business {
+  id                   String               @id @default(cuid())
+  name                 String
+  slug                 String               @unique
+  status               String               @default("active")
+  plan                 String               @default("standard")
+  monthlyPayment       Float                @default(0)
+  paymentStatus        String               @default("unpaid")
+  paymentDueDay        Int                  @default(1)
+  notes                String?
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+  users                BusinessUser[]
+  subscriptions        Subscription[]
+  customers            Customer[]
+  orders               Order[]
+  orderItems           OrderItem[]
+  products             Product[]
+  existingCustomers    ExistingCustomers[]
+  outsourcingCompanies OutsourcingCompany[]
+}
+
+model BusinessUser {
+  id         String    @id @default(cuid())
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+  username   String
+  password   String
+  email      String?
+  role       String    @default("business_admin")
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@unique([businessId, username])
+  @@index([businessId])
+}
+
+model Subscription {
+  id            String   @id @default(cuid())
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id])
+  monthlyAmount Float
+  currency      String   @default("PKR")
+  paymentStatus String   @default("unpaid")
+  nextDueDate   DateTime?
+  startedAt     DateTime @default(now())
+  endedAt       DateTime?
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([businessId])
 }

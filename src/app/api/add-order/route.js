@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../../../lib/prisma";
+import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
 
 export async function POST(request) {
   try {
+    const ctx = await getTenantContext();
+    if (ctx.error) return ctx.error;
+    const businessErr = requireBusiness(ctx);
+    if (businessErr) return businessErr;
+
     const body = await request.json();
     const {
       customerName,
@@ -49,7 +53,7 @@ export async function POST(request) {
 
     // Find or create the customer
     const customer = await prisma.customer.upsert({
-      where: { name: customerName },
+      where: { businessId_name: { businessId: ctx.businessId, name: customerName } },
       update: {
         contact: customerContact,
         address: customerAddress,
@@ -57,6 +61,7 @@ export async function POST(request) {
         existingId: existingCustomerId, // Use existingCustomerId
       },
       create: {
+        businessId: ctx.businessId,
         name: customerName,
         contact: customerContact,
         address: customerAddress,
@@ -67,12 +72,15 @@ export async function POST(request) {
 
     // Find or create the outsourcing company
     const outsourcingCompany = await prisma.outsourcingCompany.upsert({
-      where: { name: outsourcingCompanyName },
+      where: {
+        businessId_name: { businessId: ctx.businessId, name: outsourcingCompanyName },
+      },
       update: {
         contact: "N/A",
         address: "N/A",
       },
       create: {
+        businessId: ctx.businessId,
         name: outsourcingCompanyName,
         contact: "N/A",
         address: "N/A",
@@ -93,6 +101,7 @@ export async function POST(request) {
     // Create the order with the calculated subtotal, outsourcing details, and profit
     const order = await prisma.order.create({
       data: {
+        businessId: ctx.businessId,
         customerId: customer.id,
         service,
         statusId: statusRecord.id,
@@ -105,6 +114,7 @@ export async function POST(request) {
         profit: profit,
         items: {
           create: items.map((item) => ({
+            businessId: ctx.businessId,
             product: item.product,
             quantity: item.quantity,
             unitPrice: item.unitPrice,

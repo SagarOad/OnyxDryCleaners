@@ -1,15 +1,24 @@
 // /app/api/delete-product/route.js
 import prisma from "../../../../lib/prisma";
 import { NextResponse } from "next/server";
+import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
 
 export async function DELETE(request) {
   try {
+    const ctx = await getTenantContext();
+    if (ctx.error) return ctx.error;
+    const businessErr = requireBusiness(ctx);
+    if (businessErr) return businessErr;
+
     const body = await request.json();
     const { id } = body;
 
-    await prisma.product.delete({
-      where: { id },
+    const deleted = await prisma.product.deleteMany({
+      where: { id, businessId: ctx.businessId },
     });
+    if (deleted.count === 0) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

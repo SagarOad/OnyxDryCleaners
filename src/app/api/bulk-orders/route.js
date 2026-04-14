@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "../../../../lib/prisma";
 import { buildOrderListWhere } from "@/lib/orderWhere";
+import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
 
 /**
  * Bulk status updates or deletes. No schema changes.
@@ -8,6 +9,11 @@ import { buildOrderListWhere } from "@/lib/orderWhere";
  */
 export async function POST(request) {
   try {
+    const ctx = await getTenantContext();
+    if (ctx.error) return ctx.error;
+    const businessErr = requireBusiness(ctx);
+    if (businessErr) return businessErr;
+
     const body = await request.json();
     const {
       action,
@@ -40,9 +46,9 @@ export async function POST(request) {
           { status: 400 }
         );
       }
-      where = { id: { in: orderIds } };
+      where = { id: { in: orderIds }, businessId: ctx.businessId };
     } else {
-      where = buildOrderListWhere(statusFilter, searchQuery);
+      where = buildOrderListWhere(statusFilter, searchQuery, ctx.businessId);
     }
 
     if (action === "setStatus") {
@@ -82,10 +88,10 @@ export async function POST(request) {
       }
       await prisma.$transaction(async (tx) => {
         await tx.orderItem.deleteMany({
-          where: { orderId: { in: idList } },
+          where: { orderId: { in: idList }, businessId: ctx.businessId },
         });
         await tx.order.deleteMany({
-          where: { id: { in: idList } },
+          where: { id: { in: idList }, businessId: ctx.businessId },
         });
       });
       return NextResponse.json({

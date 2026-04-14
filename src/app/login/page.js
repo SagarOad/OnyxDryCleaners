@@ -31,7 +31,7 @@ export default function Login() {
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id) {
-      router.replace("/");
+      router.replace(session.user.role === "superadmin" ? "/superadmin" : "/");
     }
   }, [status, session, router]);
 
@@ -59,7 +59,11 @@ export default function Login() {
       });
 
       if (res?.ok) {
-        router.push("/");
+        const sessionRes = await fetch("/api/auth/session");
+        const sessionData = await sessionRes.json();
+        const target =
+          sessionData?.user?.role === "superadmin" ? "/superadmin" : "/";
+        router.push(target);
         return;
       }
 

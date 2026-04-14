@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Info } from "lucide-react";
+const ALLOWED_ROLES = new Set(["admin", "business_admin", "superadmin"]);
 
 const defaultFinance = {
   revenueThisMonth: 0,
@@ -45,7 +46,7 @@ export default function FinancePage() {
   useEffect(() => {
     if (
       status === "unauthenticated" ||
-      (session && session.user.role !== "admin")
+      (session && !ALLOWED_ROLES.has(session.user.role))
     ) {
       router.push("/login");
     }
@@ -76,7 +77,7 @@ export default function FinancePage() {
     );
   }
 
-  if (!session || session.user.role !== "admin") {
+  if (!session || !ALLOWED_ROLES.has(session.user.role)) {
     return null;
   }
 

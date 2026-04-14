@@ -31,11 +31,12 @@ export function pctChange(current, previous) {
   return ((current - previous) / previous) * 100;
 }
 
-export async function completedRevenueAndCount(prisma, start, end) {
+export async function completedRevenueAndCount(prisma, start, end, businessId) {
   const where = {
     createdAt: { gte: start, lte: end },
     status: { status: "completed" },
   };
+  if (businessId) where.businessId = businessId;
   const [agg, count] = await Promise.all([
     prisma.order.aggregate({
       where,
@@ -49,11 +50,13 @@ export async function completedRevenueAndCount(prisma, start, end) {
   };
 }
 
-export async function orderVolumeExcludingCancelled(prisma, start, end) {
+export async function orderVolumeExcludingCancelled(prisma, start, end, businessId) {
+  const where = {
+    createdAt: { gte: start, lte: end },
+    status: { status: { not: "cancelled" } },
+  };
+  if (businessId) where.businessId = businessId;
   return prisma.order.count({
-    where: {
-      createdAt: { gte: start, lte: end },
-      status: { status: { not: "cancelled" } },
-    },
+    where,
   });
 }

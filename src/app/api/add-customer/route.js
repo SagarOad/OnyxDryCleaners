@@ -1,23 +1,29 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../../../lib/prisma";
+import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
 
 export async function POST(request) {
   try {
-    const { name, email, phone } = await request.json();
+    const ctx = await getTenantContext();
+    if (ctx.error) return ctx.error;
+    const businessErr = requireBusiness(ctx);
+    if (businessErr) return businessErr;
+
+    const { name, contact, address, service } = await request.json();
 
     // Validate incoming data
-    if (!name || !email || !phone) {
+    if (!name || !contact) {
       return NextResponse.json({ error: "Invalid input data" }, { status: 400 });
     }
 
     // Create the customer
     const customer = await prisma.customer.create({
       data: {
+        businessId: ctx.businessId,
         name,
-        email,
-        phone,
+        contact,
+        address: address || "",
+        service: service || "",
       },
     });
 

@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../../../lib/prisma";
+import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
 
 export async function POST(request) {
   try {
+    const ctx = await getTenantContext();
+    if (ctx.error) return ctx.error;
+    const businessErr = requireBusiness(ctx);
+    if (businessErr) return businessErr;
+
     const { name, contact, address, service } = await request.json();
 
     // Validate that name is provided
@@ -15,6 +19,7 @@ export async function POST(request) {
     // Create the customer, allowing optional fields to be null
     const customer = await prisma.existingCustomers.create({
       data: {
+        businessId: ctx.businessId,
         name,
         contact: contact || "Unknown",  // Allow null for optional fields
         address: address || "Unknown",  // Allow null for optional fields

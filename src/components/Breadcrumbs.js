@@ -14,6 +14,9 @@ const LABELS = {
   "/add-existing-customer": "Add customer",
   "/products": "Products",
   "/add-product": "Add product",
+  "/superadmin": "Superadmin",
+  "/superadmin/businesses": "Businesses",
+  "/superadmin/billing": "Billing",
 };
 
 export default function Breadcrumbs() {
