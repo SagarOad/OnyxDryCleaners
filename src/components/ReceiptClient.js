@@ -5,7 +5,6 @@ import Image from "next/image";
 import logo from "@/assets/onyxlogo.jpg";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { getReceiptNumber } from "@/lib/receiptNumber";
 
 const ReceiptClient = ({
   data,
@@ -14,6 +13,7 @@ const ReceiptClient = ({
   onClose,
   deliveryDate,
   issuedAt,
+  showReceiptNumber = true,
 }) => {
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
@@ -31,10 +31,11 @@ const ReceiptClient = ({
   const totalAmount = subtotal - discountAmount + (data?.deliveryCharge || 0);
   const hasUrgentItems = (data?.items || []).some((i) => i.urgent);
   const displayDate = issuedAt ? new Date(issuedAt) : new Date();
-  const receiptNo = getReceiptNumber({
-    id: data?.id,
-    receiptNumber: receiptNumber ?? orderCount,
-  });
+  const receiptNo =
+    receiptNumber ||
+    (orderCount != null
+      ? `00${orderCount}`
+      : `RC-${String(data?.id || "").slice(-6).toUpperCase()}`);
   const resolvedDeliveryDate = deliveryDate || data?.deliveryDate || "";
 
   // console.log(deliveryDate, "DATA TEST");
@@ -93,7 +94,7 @@ const ReceiptClient = ({
 
         <div className="mb-4 text-sm">
           <p>Date: {displayDate.toLocaleDateString("en-GB")}</p>
-          <p>Receipt No: {receiptNo}</p>
+          {showReceiptNumber ? <p>Receipt No: {receiptNo}</p> : null}
           <p>
             Service Type: {data?.service}
             {(data?.isUrgent || hasUrgentItems) && (

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "../../../../lib/prisma";
 import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
-import { RECEIPT_START } from "@/lib/receiptNumber";
 
 export async function POST(request) {
   try {
@@ -132,22 +131,7 @@ export async function POST(request) {
       },
     });
 
-    const seq = await prisma.order.count({
-      where: {
-        businessId: ctx.businessId,
-        OR: [
-          { createdAt: { lt: order.createdAt } },
-          {
-            AND: [{ createdAt: order.createdAt }, { id: { lte: order.id } }],
-          },
-        ],
-      },
-    });
-
-    return NextResponse.json({
-      ...order,
-      receiptNumber: RECEIPT_START + seq - 1,
-    });
+    return NextResponse.json(order);
   } catch (error) {
     console.error("Error creating order:", error); // Log the full error object
 

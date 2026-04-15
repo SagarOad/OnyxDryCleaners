@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import prisma from "../../../../lib/prisma";
 import { buildOrderListWhere } from "@/lib/orderWhere";
 import { getTenantContext, requireBusiness } from "@/lib/tenantAuth";
-import { RECEIPT_START } from "@/lib/receiptNumber";
 
 export async function GET(request) {
   try {
@@ -41,31 +40,8 @@ export async function GET(request) {
       prisma.order.count({ where }),
     ]);
 
-    const ordersWithReceipt = await Promise.all(
-      orders.map(async (order) => {
-        const seq = await prisma.order.count({
-          where: {
-            businessId: ctx.businessId,
-            OR: [
-              { createdAt: { lt: order.createdAt } },
-              {
-                AND: [
-                  { createdAt: order.createdAt },
-                  { id: { lte: order.id } },
-                ],
-              },
-            ],
-          },
-        });
-        return {
-          ...order,
-          receiptNumber: RECEIPT_START + seq - 1,
-        };
-      })
-    );
-
     return NextResponse.json({
-      orders: ordersWithReceipt,
+      orders,
       totalOrders,
       totalPages: Math.max(1, Math.ceil(totalOrders / pageSize)),
     });

@@ -615,6 +615,7 @@ export default function OrderTable() {
           data={receiptOrder}
           receiptNumber={getReceiptNumber(receiptOrder)}
           issuedAt={receiptOrder.createdAt}
+          showReceiptNumber={false}
           onClose={() => setReceiptOrder(null)}
         />
       )}
