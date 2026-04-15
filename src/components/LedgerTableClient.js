@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import EditLedgerEntryModal from "./EditLedgerEntryModal";
 import LedgerReportPanel from "./LedgerReportPanel";
+import Pagination from "./Pagination";
 
 function formatRs(n) {
   if (n == null || Number.isNaN(n)) return "—";
@@ -217,27 +218,12 @@ export default function LedgerTableClient() {
       </div>
 
       {totalPages > 1 && (
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-          <button
-            type="button"
-            disabled={loading || currentPage === 1}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            className="rounded-md bg-slate-200 px-3 py-1.5 text-sm hover:bg-slate-300 disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-slate-600">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={loading || currentPage === totalPages}
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            className="rounded-md bg-slate-200 px-3 py-1.5 text-sm hover:bg-slate-300 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          disabled={loading}
+        />
       )}
 
       {editing && (

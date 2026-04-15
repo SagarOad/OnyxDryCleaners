@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import EditCustomerModal from "./EditCustomerModal";
+import Pagination from "./Pagination";
 
 export default function CustomerTableClient() {
   const [customers, setCustomers] = useState([]);
@@ -74,35 +75,12 @@ export default function CustomerTableClient() {
   const renderPagination = () => {
     if (totalPages <= 1) return null;
     return (
-      <div className="flex flex-wrap justify-center items-center gap-2 mt-4">
-        <button
-          type="button"
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          className={`px-3 py-1.5 text-sm rounded-md ${
-            currentPage === 1 ? "bg-slate-200 text-slate-500" : "bg-slate-800 text-white"
-          }`}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </button>
-        <span className="text-sm text-slate-600 px-2">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          type="button"
-          onClick={() =>
-            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-          }
-          className={`px-3 py-1.5 text-sm rounded-md ${
-            currentPage === totalPages
-              ? "bg-slate-200 text-slate-500"
-              : "bg-slate-800 text-white"
-          }`}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        disabled={loading}
+      />
     );
   };
 

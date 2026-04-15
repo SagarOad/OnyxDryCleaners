@@ -334,7 +334,10 @@ export default function AddOrderClient({ initialData }) {
       });
 
       // Show the receipt
-      setReceiptData(response.data);
+      setReceiptData({
+        ...response.data,
+        deliveryDate,
+      });
       setShowModal(true);
 
       // **Increment the order count**
@@ -961,6 +964,8 @@ export default function AddOrderClient({ initialData }) {
           data={receiptData}
           deliveryDate={deliveryDate}
           orderCount={orderCount} // Now it starts from 1020 and increments
+          receiptNumber={`00${orderCount}`}
+          issuedAt={receiptData?.createdAt}
           onClose={() => setShowModal(false)}
           totalAmount={totalAmount}
         />

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import Pagination from "./Pagination";
 
 export default function ProductsTableClient() {
   const [products, setProducts] = useState([]);
@@ -302,35 +303,12 @@ export default function ProductsTableClient() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex flex-wrap justify-center items-center gap-2 mt-4">
-          <button
-            type="button"
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className={`px-3 py-1.5 text-sm rounded-md ${
-              currentPage === 1
-                ? "bg-slate-200 text-slate-500"
-                : "bg-slate-800 text-white"
-            }`}
-          >
-            Previous
-          </button>
-          <span className="text-sm text-slate-600 px-2">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            type="button"
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className={`px-3 py-1.5 text-sm rounded-md ${
-              currentPage === totalPages
-                ? "bg-slate-200 text-slate-500"
-                : "bg-slate-800 text-white"
-            }`}
-          >
-            Next
-          </button>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          disabled={loading}
+        />
       )}
     </div>
   );

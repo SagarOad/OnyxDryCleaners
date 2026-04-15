@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { FaCheckCircle, FaTimesCircle, FaTrashAlt } from "react-icons/fa";
 import { FcProcess } from "react-icons/fc";
+import { Eye, Printer } from "lucide-react";
+import Pagination from "./Pagination";
+import ReceiptClient from "./ReceiptClient";
 
 export default function OrderTable() {
   const [orders, setOrders] = useState([]);
@@ -17,6 +20,8 @@ export default function OrderTable() {
   const [messagePopup, setMessagePopup] = useState(null);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [viewingOrder, setViewingOrder] = useState(null);
+  const [receiptOrder, setReceiptOrder] = useState(null);
 
   const fetchOrders = async (page) => {
     try {
@@ -225,6 +230,8 @@ export default function OrderTable() {
   };
 
   const indexOfFirstOrder = (currentPage - 1) * ordersPerPage;
+  const getReceiptNumber = (order) =>
+    `RC-${String(order?.id || "").slice(-6).toUpperCase()}`;
 
   return (
     <div className="min-w-0">
@@ -343,16 +350,13 @@ export default function OrderTable() {
               <th className="py-3 px-3 font-medium">Customer</th>
               <th className="py-3 px-3 font-medium">Service</th>
               <th className="py-3 px-3 font-medium whitespace-nowrap">
+                Receipt no.
+              </th>
+              <th className="py-3 px-3 font-medium whitespace-nowrap">
                 Status
               </th>
               <th className="py-3 px-3 font-medium whitespace-nowrap text-right">
                 Subtotal
-              </th>
-              <th className="py-3 px-3 font-medium whitespace-nowrap text-right">
-                Delivery
-              </th>
-              <th className="py-3 px-3 font-medium whitespace-nowrap text-right">
-                Discount
               </th>
               <th className="py-3 px-3 font-medium whitespace-nowrap">Date</th>
               <th className="py-3 px-3 font-medium text-right whitespace-nowrap">
@@ -364,7 +368,7 @@ export default function OrderTable() {
             {loading ? (
               [...Array(ordersPerPage)].map((_, idx) => (
                 <tr key={idx} className="border-b border-slate-100">
-                  <td colSpan={10} className="p-3">
+                  <td colSpan={9} className="p-3">
                     <div className="h-4 bg-slate-200 rounded animate-pulse" />
                   </td>
                 </tr>
@@ -372,7 +376,7 @@ export default function OrderTable() {
             ) : orders.length === 0 ? (
               <tr>
                 <td
-                  colSpan={10}
+                  colSpan={9}
                   className="py-10 px-4 text-center text-slate-500"
                 >
                   No orders match your filters.
@@ -401,6 +405,9 @@ export default function OrderTable() {
                   <td className="py-3 px-3 text-slate-700 max-w-[120px] break-words">
                     {order?.service}
                   </td>
+                  <td className="py-3 px-3 whitespace-nowrap text-slate-700">
+                    {getReceiptNumber(order)}
+                  </td>
                   <td className="py-3 px-3">
                     {order?.status?.status === "received" && (
                       <span className="text-blue-600 font-semibold">
@@ -426,17 +433,27 @@ export default function OrderTable() {
                   <td className="py-3 px-3 text-right text-slate-800 whitespace-nowrap">
                     {order.subtotal ?? "—"}
                   </td>
-                  <td className="py-3 px-3 text-right text-slate-800 whitespace-nowrap">
-                    {order.deliveryCharge}
-                  </td>
-                  <td className="py-3 px-3 text-right text-slate-800 whitespace-nowrap">
-                    {order.discount ?? "—"}
-                  </td>
                   <td className="py-3 px-3 text-slate-700 whitespace-nowrap">
                     {new Date(order.createdAt).toLocaleDateString("en-GB")}
                   </td>
                   <td className="py-3 px-3">
                     <div className="flex flex-wrap justify-end gap-1">
+                      <button
+                        type="button"
+                        title="View order"
+                        onClick={() => setViewingOrder(order)}
+                        className="p-1.5 rounded-md hover:bg-slate-100"
+                      >
+                        <Eye className="h-4 w-4 text-slate-700" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Print receipt"
+                        onClick={() => setReceiptOrder(order)}
+                        className="p-1.5 rounded-md hover:bg-slate-100"
+                      >
+                        <Printer className="h-4 w-4 text-slate-700" />
+                      </button>
                       <button
                         type="button"
                         title="Mark completed"
@@ -504,27 +521,12 @@ export default function OrderTable() {
         </table>
       </div>
 
-      <div className="flex flex-wrap justify-center items-center gap-2 mt-4">
-        <button
-          type="button"
-          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          disabled={loading || currentPage === 1}
-          className="px-3 py-1.5 text-sm rounded-md bg-slate-200 hover:bg-slate-300 disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <span className="text-sm text-slate-600 px-2">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          type="button"
-          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          disabled={loading || currentPage === totalPages}
-          className="px-3 py-1.5 text-sm rounded-md bg-slate-200 hover:bg-slate-300 disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        disabled={loading}
+      />
 
       {messagePopup && (
         <div
@@ -536,6 +538,87 @@ export default function OrderTable() {
         >
           {messagePopup.message}
         </div>
+      )}
+
+      {viewingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Order details
+                </h3>
+                <p className="text-sm text-slate-600">
+                  Receipt: {getReceiptNumber(viewingOrder)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewingOrder(null)}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 text-sm text-slate-700 md:grid-cols-2">
+              <p><span className="font-medium text-slate-900">Customer:</span> {viewingOrder.customer?.name}</p>
+              <p><span className="font-medium text-slate-900">Contact:</span> {viewingOrder.customer?.contact || "—"}</p>
+              <p><span className="font-medium text-slate-900">Service:</span> {viewingOrder.service}</p>
+              <p><span className="font-medium text-slate-900">Status:</span> {viewingOrder.status?.status}</p>
+              <p><span className="font-medium text-slate-900">Date:</span> {new Date(viewingOrder.createdAt).toLocaleDateString("en-GB")}</p>
+              <p><span className="font-medium text-slate-900">Subtotal:</span> Rs {Number(viewingOrder.subtotal || 0).toFixed(2)}</p>
+              <p><span className="font-medium text-slate-900">Delivery:</span> Rs {Number(viewingOrder.deliveryCharge || 0).toFixed(2)}</p>
+              <p><span className="font-medium text-slate-900">Discount:</span> Rs {Number(viewingOrder.discount || 0).toFixed(2)}</p>
+            </div>
+
+            <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
+              <table className="w-full min-w-[480px] text-sm">
+                <thead className="bg-slate-50 text-slate-700">
+                  <tr>
+                    <th className="px-3 py-2 text-left">Product</th>
+                    <th className="px-3 py-2 text-left">Qty</th>
+                    <th className="px-3 py-2 text-right">Unit</th>
+                    <th className="px-3 py-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(viewingOrder.items || []).map((item) => (
+                    <tr key={item.id} className="border-t border-slate-100">
+                      <td className="px-3 py-2">{item.product}</td>
+                      <td className="px-3 py-2">{item.quantity}</td>
+                      <td className="px-3 py-2 text-right">{Number(item.unitPrice).toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right">{Number(item.amount).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setViewingOrder(null);
+                  setReceiptOrder(viewingOrder);
+                }}
+                className="inline-flex items-center gap-2 rounded-md bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700"
+              >
+                <Printer className="h-4 w-4" />
+                Print receipt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {receiptOrder && (
+        <ReceiptClient
+          data={receiptOrder}
+          receiptNumber={getReceiptNumber(receiptOrder)}
+          issuedAt={receiptOrder.createdAt}
+          onClose={() => setReceiptOrder(null)}
+        />
       )}
     </div>
   );

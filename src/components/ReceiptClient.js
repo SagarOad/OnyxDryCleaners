@@ -6,7 +6,14 @@ import logo from "@/assets/onyxlogo.jpg";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-const ReceiptClient = ({ data, orderCount, onClose, deliveryDate }) => {
+const ReceiptClient = ({
+  data,
+  orderCount,
+  receiptNumber,
+  onClose,
+  deliveryDate,
+  issuedAt,
+}) => {
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
     const [year, month, day] = dateStr.split("-");
@@ -21,6 +28,14 @@ const ReceiptClient = ({ data, orderCount, onClose, deliveryDate }) => {
 
   // 3. Final total
   const totalAmount = subtotal - discountAmount + (data?.deliveryCharge || 0);
+  const hasUrgentItems = (data?.items || []).some((i) => i.urgent);
+  const displayDate = issuedAt ? new Date(issuedAt) : new Date();
+  const receiptNo =
+    receiptNumber ||
+    (orderCount != null
+      ? `00${orderCount}`
+      : `RC-${String(data?.id || "").slice(-6).toUpperCase()}`);
+  const resolvedDeliveryDate = deliveryDate || data?.deliveryDate || "";
 
   // console.log(deliveryDate, "DATA TEST");
 
@@ -77,25 +92,17 @@ const ReceiptClient = ({ data, orderCount, onClose, deliveryDate }) => {
         </div>
 
         <div className="mb-4 text-sm">
-          <p>Date: {new Date().toLocaleDateString()}</p>
-          <p>Order Number: 00{orderCount}</p>
+          <p>Date: {displayDate.toLocaleDateString("en-GB")}</p>
+          <p>Receipt No: {receiptNo}</p>
           <p>
             Service Type: {data?.service}
-            {data?.isUrgent && (
+            {(data?.isUrgent || hasUrgentItems) && (
               <span className="ml-2 text-red-600 font-semibold">(Urgent)</span>
             )}
           </p>
-          <p>Host: Vijay Kumar</p>
           <p>Customer: {data?.customer?.name}</p>
           <p>Address: {data?.customer?.address}</p>
-          <p>
-            Delivery Date:{" "}
-            {deliveryDate && (
-              <p className="mt-2 text-sm text-gray-600">
-                Selected: {formatDate(deliveryDate)}
-              </p>
-            )}
-          </p>
+          <p>Delivery Date: {resolvedDeliveryDate ? formatDate(resolvedDeliveryDate) : "—"}</p>
         </div>
 
         <div className="mb-4">
@@ -147,6 +154,9 @@ const ReceiptClient = ({ data, orderCount, onClose, deliveryDate }) => {
             Discount Rs. {discountAmount.toFixed(2)}
           </p>
           <p className="font-bold">Total: Rs. {totalAmount.toFixed(2)}</p>
+          <p className="mt-1 text-xs text-slate-600">
+            Urgent items: {hasUrgentItems ? "Yes" : "No"}
+          </p>
         </div>
 
         <div className="text-center text-sm mt-4">
