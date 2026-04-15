@@ -5,6 +5,7 @@ import Image from "next/image";
 import logo from "@/assets/onyxlogo.jpg";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { getReceiptNumber } from "@/lib/receiptNumber";
 
 const ReceiptClient = ({
   data,
@@ -30,11 +31,10 @@ const ReceiptClient = ({
   const totalAmount = subtotal - discountAmount + (data?.deliveryCharge || 0);
   const hasUrgentItems = (data?.items || []).some((i) => i.urgent);
   const displayDate = issuedAt ? new Date(issuedAt) : new Date();
-  const receiptNo =
-    receiptNumber ||
-    (orderCount != null
-      ? `00${orderCount}`
-      : `RC-${String(data?.id || "").slice(-6).toUpperCase()}`);
+  const receiptNo = getReceiptNumber({
+    id: data?.id,
+    receiptNumber: receiptNumber ?? orderCount,
+  });
   const resolvedDeliveryDate = deliveryDate || data?.deliveryDate || "";
 
   // console.log(deliveryDate, "DATA TEST");

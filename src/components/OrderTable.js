@@ -6,6 +6,7 @@ import { FcProcess } from "react-icons/fc";
 import { Eye, Printer } from "lucide-react";
 import Pagination from "./Pagination";
 import ReceiptClient from "./ReceiptClient";
+import { getReceiptNumber } from "@/lib/receiptNumber";
 
 export default function OrderTable() {
   const [orders, setOrders] = useState([]);
@@ -230,9 +231,6 @@ export default function OrderTable() {
   };
 
   const indexOfFirstOrder = (currentPage - 1) * ordersPerPage;
-  const getReceiptNumber = (order) =>
-    `RC-${String(order?.id || "").slice(-6).toUpperCase()}`;
-
   return (
     <div className="min-w-0">
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-4">

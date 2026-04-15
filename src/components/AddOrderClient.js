@@ -5,6 +5,11 @@ import Select from "react-select";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
 import ReceiptClient from "./ReceiptClient";
+import {
+  formatReceiptNumber,
+  getReceiptNumber,
+  RECEIPT_START,
+} from "@/lib/receiptNumber";
 
 const inputClass =
   "w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30";
@@ -100,8 +105,8 @@ export default function AddOrderClient({ initialData }) {
 
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [orderCount, setOrderCount] = useState(1020);
-  const [isEditing, setIsEditing] = useState(false);
+  const [orderCount, setOrderCount] = useState(null);
+  const [receiptNoLoading, setReceiptNoLoading] = useState(true);
   const [hasMounted, setHasMounted] = useState(false); // Track mount state
   const [receiptData, setReceiptData] = useState(null);
   const [errors, setErrors] = useState({});
@@ -285,25 +290,30 @@ export default function AddOrderClient({ initialData }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Wait until the component has mounted before accessing localStorage
+  // Wait until the component has mounted before loading data that depends on the browser.
   useEffect(() => {
     setHasMounted(true);
-    const savedOrderCount = Number(localStorage.getItem("orderCount")) || 1020;
-    setOrderCount(savedOrderCount);
+    const fetchNextReceiptNumber = async () => {
+      try {
+        const { data } = await axios.get("/api/get-orders", {
+          params: {
+            page: 1,
+            pageSize: 1,
+            statusFilter: "all",
+            searchQuery: "",
+          },
+        });
+        const next = RECEIPT_START + (Number(data?.totalOrders) || 0);
+        setOrderCount(next);
+      } catch (error) {
+        console.error("Error fetching next receipt number:", error);
+        setOrderCount(RECEIPT_START);
+      } finally {
+        setReceiptNoLoading(false);
+      }
+    };
+    fetchNextReceiptNumber();
   }, []);
-
-  // Update localStorage whenever orderCount changes (after mount)
-  useEffect(() => {
-    if (hasMounted) {
-      localStorage.setItem("orderCount", orderCount);
-    }
-  }, [orderCount, hasMounted]);
-
-  const handleSaveNewOrderCount = (newCount) => {
-    setOrderCount(newCount);
-    localStorage.setItem("orderCount", newCount);
-    setIsEditing(false);
-  };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
@@ -340,8 +350,11 @@ export default function AddOrderClient({ initialData }) {
       });
       setShowModal(true);
 
-      // **Increment the order count**
-      setOrderCount((prevCount) => prevCount + 1);
+      // Keep the left-side preview in sync with backend receipt generation.
+      setOrderCount(
+        Number(response.data?.receiptNumber || RECEIPT_START - 1) + 1
+      );
+      setReceiptNoLoading(false);
 
       // **Reset the form fields**
       setOrder({
@@ -789,37 +802,24 @@ export default function AddOrderClient({ initialData }) {
 
               {/* Submit Button */}
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-                {isEditing ? (
-                  <input
-                    type="number"
-                    className="w-24 rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
-                    defaultValue={orderCount}
-                    onBlur={(e) =>
-                      handleSaveNewOrderCount(Number(e.target.value))
-                    }
-                  />
-                ) : (
-                  <span className="text-sm text-slate-600">
-                    Receipt no.{" "}
-                    <strong className="text-slate-900">00{orderCount}</strong>
-                  </span>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50"
-                >
-                  {isEditing ? "Save" : "Edit"}
-                </button>
+                <span className="text-sm text-slate-600">
+                  Receipt no.{" "}
+                  <strong className="text-slate-900">
+                    {receiptNoLoading || orderCount == null
+                      ? "Loading..."
+                      : formatReceiptNumber(orderCount)}
+                  </strong>
+                </span>
 
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={loading || !isFormValid}
+                  disabled={loading || !isFormValid || receiptNoLoading}
                   title={
                     !isFormValid
                       ? "Fill all required fields to submit"
+                      : receiptNoLoading
+                      ? "Loading receipt number..."
                       : undefined
                   }
                   className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-800 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
@@ -964,7 +964,7 @@ export default function AddOrderClient({ initialData }) {
           data={receiptData}
           deliveryDate={deliveryDate}
           orderCount={orderCount} // Now it starts from 1020 and increments
-          receiptNumber={`00${orderCount}`}
+          receiptNumber={getReceiptNumber(receiptData)}
           issuedAt={receiptData?.createdAt}
           onClose={() => setShowModal(false)}
           totalAmount={totalAmount}
