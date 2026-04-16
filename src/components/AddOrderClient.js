@@ -339,9 +339,11 @@ export default function AddOrderClient({ initialData }) {
           existingCustomerId === undefined ? null : existingCustomerId,
       });
 
-      // Show the receipt
+      // Show the receipt (preserve urgent flags for receipt rendering)
       setReceiptData({
         ...response.data,
+        items: order.items,
+        isUrgent: order.isUrgent,
         deliveryDate,
         localReceiptNo: `00${orderCount}`,
       });
