@@ -348,9 +348,6 @@ export default function OrderTable() {
               <th className="py-3 px-3 font-medium">Customer</th>
               <th className="py-3 px-3 font-medium">Service</th>
               <th className="py-3 px-3 font-medium whitespace-nowrap">
-                Receipt no.
-              </th>
-              <th className="py-3 px-3 font-medium whitespace-nowrap">
                 Status
               </th>
               <th className="py-3 px-3 font-medium whitespace-nowrap text-right">
@@ -402,9 +399,6 @@ export default function OrderTable() {
                   </td>
                   <td className="py-3 px-3 text-slate-700 max-w-[120px] break-words">
                     {order?.service}
-                  </td>
-                  <td className="py-3 px-3 whitespace-nowrap text-slate-700">
-                    {getReceiptNumber(order)}
                   </td>
                   <td className="py-3 px-3">
                     {order?.status?.status === "received" && (
